@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cofre — Testes Fase A</title>
+<style>body{font-family:system-ui,Arial;padding:24px;max-width:720px;margin:auto}.ok{color:#15803d}.fail{color:#b91c1c}li{margin:6px 0;font-size:14px}h3{padding:8px 12px;border-radius:8px}h3.ok{background:#dcfce7}h3.fail{background:#fee2e2}</style></head>
+<body><h2>🔐 Testes da criptografia do cofre (Fase A) — dados FALSOS</h2><ul id="r"></ul>
+<script src="cofre-crypto.js"></script><script src="cofre-lock.js"></script><script>
+var R=document.getElementById('r'),pass=0,fail=0;
+function log(ok,msg){var li=document.createElement('li');li.className=ok?'ok':'fail';li.textContent=(ok?'✓ ':'✗ ')+msg;R.appendChild(li);ok?pass++:fail++;}
+(async function(){
+ try{
+  var C=window.CofreCrypto;
+  log(typeof crypto.subtle==='object','contexto seguro: crypto.subtle disponível');
+  var salt=C.gerarSaltB64();
+  var keyA=await C.deriveKey('senha-correta-FAKE', salt, 600000);
+  var keyB=await C.deriveKey('senha-ERRADA-FAKE', salt, 600000);
+  var e1=await C.encrypt(keyA,'segredo123');
+  log((await C.decrypt(keyA,e1.iv,e1.ct))==='segredo123','round-trip cifra/decifra com a chave certa');
+  var falhou=false; try{ await C.decrypt(keyB,e1.iv,e1.ct); }catch(_){ falhou=true; }
+  log(falhou,'senha-mestre ERRADA não decifra (falha de autenticação do GCM)');
+  var v=await C.criarVerifier(keyA);
+  log((await C.checarVerifier(keyA,v.iv,v.ct))===true,'verifier valida a senha correta');
+  log((await C.checarVerifier(keyB,v.iv,v.ct))===false,'verifier REJEITA a senha errada (sem vazar info)');
+  var e2=await C.encrypt(keyA,'igual'), e3=await C.encrypt(keyA,'igual');
+  log(e2.iv!==e3.iv,'IVs distintos por operação (mesmo texto → IV diferente)');
+  log(keyA.extractable===false,'chave AES é NÃO-exportável (não serializa/persiste)');
+  window.CofreLock.setKey(keyA);
+  var inStore=false,i;
+  for(i=0;i<localStorage.length;i++) inStore=inStore||/cofre|chave|mestre|key/i.test(localStorage.key(i));
+  for(i=0;i<sessionStorage.length;i++) inStore=inStore||/cofre|chave|mestre|key/i.test(sessionStorage.key(i));
+  log(!inStore,'chave NÃO está em localStorage/sessionStorage');
+  log(window.CofreLock.estaDestravado()===true,'destravado após setKey (chave só em memória)');
+  window.CofreLock.travar();
+  log(window.CofreLock.getKey()===null,'travar() zera a chave da memória');
+ }catch(e){ log(false,'ERRO inesperado: '+e.message); }
+ var h=document.createElement('h3'); h.className=fail===0?'ok':'fail'; h.textContent=fail===0?('✅ TODOS PASSARAM ('+pass+')'):('❌ FALHAS: '+fail+' — OK: '+pass); R.parentNode.insertBefore(h,R);
+})();
+</script></body></html>

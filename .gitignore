@@ -1,0 +1,38 @@
+# ===== Python =====
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ===== Segredos / credenciais (NUNCA versionar) =====
+.env
+*.env
+!.env.example
+google-credentials.json
+*credentials*.json
+*.key
+*.crt
+*.pem
+
+# ===== Dados de usuário / uploads =====
+uploads/
+
+# ===== Dados pessoais reais (importações) =====
+import_google.csv
+import_outlook.csv
+imp_cervejas.xlsx
+*.xlsx
+*.xls
+
+# ===== Backups do app.js e afins =====
+*.bak
+*.bak[0-9]*
+
+# ===== Logs / SO / editores =====
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
