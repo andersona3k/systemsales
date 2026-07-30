@@ -8050,19 +8050,19 @@ window.abrirBebidaModal=function(beb, mode){
     function val(id){ var el=document.getElementById(id); return el?el.value:''; }
     function classeOpts(prod,v){ var arr=FC_CLASSES[prod]||[]; return '<option value="">—</option>'+arr.map(function(c){ return '<option'+(v===c?' selected':'')+'>'+esc(c)+'</option>'; }).join(''); }
     function itemRow(it,idx){
-      var c=fcCalc(it), mensal=(it.tipo_linha==='Mensal');
+      var c=fcCalc(it), mensal=(it.tipo_linha==='Mensal'), aluguel=(it.produto==='Hardware' && it.classe==='Aluguel');
       var prodOpts=FC_PROD.map(function(pr){ return '<option'+(it.produto===pr?' selected':'')+'>'+esc(pr)+'</option>'; }).join('');
       return '<tr class="fc-item" data-idx="'+idx+'">'
         +'<td><select class="fc-prod">'+prodOpts+'</select></td>'
         +'<td><select class="fc-classe">'+classeOpts(it.produto,it.classe)+'</select></td>'
         +'<td><select class="fc-tipo"><option'+(!mensal?' selected':'')+'>Projeto</option><option'+(mensal?' selected':'')+'>Mensal</option></select></td>'
-        +'<td>'+(mensal?'<input class="fc-meses" type="number" min="1" value="'+(it.meses||1)+'" style="width:56px">':'<span class="text-muted">—</span>')+'</td>'
-        +'<td><input class="fc-qtd" type="number" min="0" step="1" value="'+(it.quantidade!=null?it.quantidade:1)+'" style="width:64px"></td>'
-        +'<td><input class="fc-custo" type="number" min="0" step="0.01" value="'+(it.valor_custo!=null?it.valor_custo:0)+'" style="width:96px"></td>'
+        +'<td>'+(mensal?'<input class="fc-meses" type="number" min="1" value="'+(it.meses||1)+'" style="width:46px">':'<span class="text-muted">—</span>')+'</td>'
+        +'<td><input class="fc-qtd" type="number" min="0" step="1" value="'+(it.quantidade!=null?it.quantidade:1)+'" style="width:48px"></td>'
+        +'<td><input class="fc-custo" type="number" min="0" step="0.01" value="'+(aluguel?((parseFloat(it.valor_venda)||0)*0.8).toFixed(2):(it.valor_custo!=null?it.valor_custo:0))+'"'+(aluguel?' disabled style="width:96px;background:#f3f4f6;color:var(--text-muted)"':' style="width:96px"')+'></td>'
         +'<td><input class="fc-venda" type="number" min="0" step="0.01" value="'+(it.valor_venda!=null?it.valor_venda:0)+'" style="width:96px"></td>'
-        +'<td class="fc-margem" style="text-align:right">'+c.margem.toFixed(1)+'%</td>'
-        +'<td class="fc-tmensal" style="text-align:right">'+money(c.totalMensal)+'</td>'
-        +'<td class="fc-tprojeto" style="text-align:right;font-weight:600">'+money(c.totalProjeto)+'</td>'
+        +'<td class="fc-margem" style="text-align:right">'+(aluguel?'':c.margem.toFixed(1)+'%')+'</td>'
+        +'<td class="fc-tmensal" style="text-align:right;min-width:130px">'+money(c.totalMensal)+'</td>'
+        +'<td class="fc-tprojeto" style="text-align:right;font-weight:600;min-width:130px">'+money(c.totalProjeto)+'</td>'
         +'<td style="text-align:center"><button class="fc-del" title="Remover" style="border:none;background:none;cursor:pointer;color:var(--danger)">🗑️</button></td>'
       +'</tr>';
     }
@@ -8072,8 +8072,9 @@ window.abrirBebidaModal=function(beb, mode){
       ov.querySelectorAll('.fc-item').forEach(function(el){
         function g(sel){ var x=el.querySelector(sel); return x?x.value:null; }
         var tipo=g('.fc-tipo')||'Projeto';
-        arr.push({ produto:g('.fc-prod')||null, classe:g('.fc-classe')||null, tipo_linha:tipo,
-          quantidade:parseFloat(g('.fc-qtd'))||0, valor_custo:parseFloat(g('.fc-custo'))||0, valor_venda:parseFloat(g('.fc-venda'))||0,
+        var prod=g('.fc-prod'), classe=g('.fc-classe'), venda=parseFloat(g('.fc-venda'))||0, aluguel=(prod==='Hardware'&&classe==='Aluguel');
+        arr.push({ produto:prod||null, classe:classe||null, tipo_linha:tipo,
+          quantidade:parseFloat(g('.fc-qtd'))||0, valor_custo:aluguel?(venda*0.8):(parseFloat(g('.fc-custo'))||0), valor_venda:venda,
           meses:(tipo==='Mensal')?(parseInt((el.querySelector('.fc-meses')||{}).value)||1):1 });
       });
       state.data.itens=arr;
@@ -8082,12 +8083,15 @@ window.abrirBebidaModal=function(beb, mode){
       var tm=0,tp=0;
       ov.querySelectorAll('.fc-item').forEach(function(el){
         var tipo=(el.querySelector('.fc-tipo')||{}).value||'Projeto';
+        var prod=(el.querySelector('.fc-prod')||{}).value||'', classe=(el.querySelector('.fc-classe')||{}).value||'', aluguel=(prod==='Hardware'&&classe==='Aluguel');
         var q=parseFloat((el.querySelector('.fc-qtd')||{}).value)||0;
-        var cu=parseFloat((el.querySelector('.fc-custo')||{}).value)||0;
         var ve=parseFloat((el.querySelector('.fc-venda')||{}).value)||0;
+        var custoEl=el.querySelector('.fc-custo'), cu;
+        if(aluguel){ cu=ve*0.8; if(custoEl){ custoEl.value=cu.toFixed(2); custoEl.disabled=true; custoEl.style.background='#f3f4f6'; custoEl.style.color='var(--text-muted)'; } }
+        else { if(custoEl){ custoEl.disabled=false; custoEl.style.background=''; custoEl.style.color=''; } cu=parseFloat((custoEl||{}).value)||0; }
         var m=(tipo==='Mensal')?(parseInt((el.querySelector('.fc-meses')||{}).value)||1):1;
         var tpj=q*ve*m, tmn=(tipo==='Mensal')?q*ve:0, mg=ve>0?((ve-cu)/ve*100):0;
-        el.querySelector('.fc-margem').textContent=mg.toFixed(1)+'%';
+        el.querySelector('.fc-margem').textContent=aluguel?'':(mg.toFixed(1)+'%');
         el.querySelector('.fc-tmensal').textContent=money(tmn);
         el.querySelector('.fc-tprojeto').textContent=money(tpj);
         tm+=tmn; tp+=tpj;
@@ -8109,14 +8113,14 @@ window.abrirBebidaModal=function(beb, mode){
       var d=state.data;
       var statusOpts=FC_STATUS.map(function(x){ return '<option'+(d.status===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('');
       var tipoOpts=['Projeto','Hardware'].map(function(t){ return '<option'+(d.tipo===t?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
-      ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:1000px;width:100%;max-height:92vh;display:flex;flex-direction:column">'
+      ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:1250px;width:100%;max-height:92vh;display:flex;flex-direction:column">'
         +'<div style="flex-shrink:0;background:#fff;border-bottom:1px solid var(--border);border-radius:12px 12px 0 0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 style="margin:0">'+(state.id?'Editar forecast':'Novo forecast')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-fx="close">Fechar</button><button class="btn btn-sm btn-primary" data-fx="salvar">💾 Salvar</button></div></div>'
         +'<div style="overflow:auto;padding:18px;flex:1;min-height:0">'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">ID Lead</label><input id="fh-idlead" class="form-control" value="'+esc(d.id_lead||'')+'"></div><div class="form-group" style="flex:2;min-width:180px"><label class="form-label">Cliente</label><input id="fh-cliente" class="form-control" value="'+esc(d.cliente||'')+'"></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Status</label><select id="fh-status" class="form-control">'+statusOpts+'</select></div></div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:160px"><label class="form-label">Previsão de Fechamento</label><input id="fh-prev" type="date" class="form-control" value="'+(d.previsao_fechamento||'')+'"></div><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">% Fechamento</label><input id="fh-pct" type="number" min="0" max="100" class="form-control" value="'+(d.pct_fechamento!=null?d.pct_fechamento:'')+'"></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Tipo</label><select id="fh-tipo" class="form-control"><option value="">—</option>'+tipoOpts+'</select></div></div>'
         +'<hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Produtos</b><button class="btn btn-sm btn-secondary" data-fx="add">＋ Adicionar linha</button></div>'
-        +'<div style="overflow-x:auto"><table class="tabela-contatos" style="min-width:860px"><thead><tr><th>Produto</th><th>Classe</th><th>Tipo</th><th>Meses</th><th>Qtd</th><th>Custo</th><th>Venda</th><th style="text-align:right">Margem</th><th style="text-align:right">Total Mensal</th><th style="text-align:right">Total Projeto</th><th></th></tr></thead><tbody id="fc-itens"></tbody><tfoot><tr><td colspan="8" style="text-align:right;font-weight:700">Totais:</td><td id="fc-foot-mensal" style="text-align:right;font-weight:700">R$ 0,00</td><td id="fc-foot-total" style="text-align:right;font-weight:700">R$ 0,00</td><td></td></tr></tfoot></table></div>'
+        +'<div style="overflow-x:auto"><table class="tabela-contatos" style="min-width:860px"><thead><tr><th>Produto</th><th>Classe</th><th>Tipo</th><th>Meses</th><th>Qtd</th><th>Custo</th><th>Venda</th><th style="text-align:right">Margem</th><th style="text-align:right;min-width:130px">Total Mensal</th><th style="text-align:right;min-width:130px">Total Projeto</th><th></th></tr></thead><tbody id="fc-itens"></tbody><tfoot><tr><td colspan="8" style="text-align:right;font-weight:700">Totais:</td><td id="fc-foot-mensal" style="text-align:right;font-weight:700">R$ 0,00</td><td id="fc-foot-total" style="text-align:right;font-weight:700">R$ 0,00</td><td></td></tr></tfoot></table></div>'
         +'</div></div>';
       renderItens(); recompute();
     }
