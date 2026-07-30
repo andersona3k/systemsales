@@ -7988,7 +7988,7 @@ window.abrirBebidaModal=function(beb, mode){
   document.head.appendChild(st);
 
   var FC_PROD=['Hardware','Serviços Profissionais','Licença'];
-  var FC_CLASSES={'Hardware':['Agenciamento','Revenda'],'Serviços Profissionais':['Serviço de engenharia','Desenvolvimento','Terceiros'],'Licença':['H1','Terceiro']};
+  var FC_CLASSES={'Hardware':['Agenciamento','Revenda','Aluguel'],'Serviços Profissionais':['Serviço de engenharia','Desenvolvimento','Terceiros'],'Licença':['H1','Terceiro']};
   var FC_STATUS=['Forcast','Vendido','Arquivado'];
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function money(n){ return 'R$ '+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
