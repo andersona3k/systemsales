@@ -9,6 +9,7 @@ from ..database import get_db
 from ..models.financeiro import (
     Venda, VendaItem, Produto, FinConfig, FinLancamento, FinParcela,
     FinCcLancamento, FinCcParcela,
+    Forecast, ForecastItem,
 )
 from ..schemas.financeiro import (
     VendaIn, VendaOut, ProdutoIn, ProdutoOut,
@@ -471,3 +472,71 @@ def resumo_cartao(db: Session = Depends(get_db), _=Depends(get_current_user)):
             "cartao": chave, "nome": info["nome"], "vencimento_fatura": fatura_aberta, "total": total,
         })
     return out
+
+
+# ===== FORECAST (Forcast) =====
+def _fc_item_out(it):
+    return {"id": str(it.id), "produto": it.produto, "classe": it.classe,
+            "tipo_linha": it.tipo_linha or "Projeto", "quantidade": it.quantidade or 0,
+            "valor_custo": it.valor_custo or 0, "valor_venda": it.valor_venda or 0,
+            "meses": it.meses or 1, "ordem": it.ordem or 0}
+
+
+def _fc_out(f):
+    return {"id": str(f.id), "id_lead": f.id_lead, "cliente": f.cliente,
+            "status": f.status or "Forcast", "previsao_fechamento": f.previsao_fechamento,
+            "pct_fechamento": f.pct_fechamento or 0, "tipo": f.tipo,
+            "criado_em": f.criado_em.isoformat() if f.criado_em else None,
+            "itens": [_fc_item_out(x) for x in f.itens]}
+
+
+def _fc_apply_itens(db, fid, itens):
+    db.query(ForecastItem).filter(ForecastItem.forecast_id == fid).delete()
+    for i, it in enumerate(itens or []):
+        db.add(ForecastItem(
+            forecast_id=fid, produto=it.get("produto"), classe=it.get("classe"),
+            tipo_linha=it.get("tipo_linha") or "Projeto",
+            quantidade=float(it.get("quantidade") or 0),
+            valor_custo=float(it.get("valor_custo") or 0),
+            valor_venda=float(it.get("valor_venda") or 0),
+            meses=int(it.get("meses") or 1),
+            ordem=it.get("ordem") if it.get("ordem") is not None else i))
+
+
+@router.get("/forecast")
+def listar_forecast(ano: str | None = None, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    q = db.query(Forecast)
+    if ano:
+        q = q.filter(Forecast.previsao_fechamento.like(f"{ano}-%"))
+    return [_fc_out(f) for f in q.order_by(Forecast.criado_em.desc()).all()]
+
+
+@router.post("/forecast", status_code=201)
+def criar_forecast(dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = Forecast(id_lead=dados.get("id_lead"), cliente=dados.get("cliente"),
+                 status=dados.get("status") or "Forcast",
+                 previsao_fechamento=dados.get("previsao_fechamento"),
+                 pct_fechamento=int(dados.get("pct_fechamento") or 0), tipo=dados.get("tipo"))
+    db.add(f); db.flush()
+    _fc_apply_itens(db, f.id, dados.get("itens"))
+    db.commit(); db.refresh(f)
+    return _fc_out(f)
+
+
+@router.patch("/forecast/{fid}")
+def atualizar_forecast(fid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = db.query(Forecast).filter(Forecast.id == fid).first()
+    if not f: raise HTTPException(404, "Forecast nao encontrado")
+    for k in ("id_lead", "cliente", "status", "previsao_fechamento", "tipo"):
+        if k in dados: setattr(f, k, dados[k])
+    if "pct_fechamento" in dados: f.pct_fechamento = int(dados.get("pct_fechamento") or 0)
+    if "itens" in dados: _fc_apply_itens(db, fid, dados["itens"])
+    db.commit(); db.refresh(f)
+    return _fc_out(f)
+
+
+@router.delete("/forecast/{fid}", status_code=204)
+def deletar_forecast(fid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = db.query(Forecast).filter(Forecast.id == fid).first()
+    if not f: raise HTTPException(404, "Forecast nao encontrado")
+    db.delete(f); db.commit()

@@ -4773,7 +4773,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ADMIN', it:[['configuracoes','Configurações','⚙️'],['usuarios','Usuários','👤']]},
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
-      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
+      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['felicitacoes','Mensagem','💬'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️']]},
       social
@@ -4800,6 +4800,7 @@ window.abrirBebidaModal=function(beb, mode){
   function menuClick(id,b){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
+    if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id.indexOf('rede:')===0){
       var canal=id.slice(5); window.PUB_CANAL=canal;
@@ -7488,7 +7489,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ADMIN', it:[['configuracoes','Configurações','⚙️'],['usuarios','Usuários','👤']]},
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
-      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
+      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
       social
@@ -7515,6 +7516,7 @@ window.abrirBebidaModal=function(beb, mode){
   function menuClick(id,b){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
+    if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id==='prosp-dash'){ navegarPara('prosp-dash'); if(typeof carregarProspDash==='function') carregarProspDash(); return; }
     if(id==='prospeccao-empresas'){ navegarPara('prospeccao-empresas'); if(typeof carregarProspEmpresas==='function') carregarProspEmpresas(); return; }
@@ -7563,7 +7565,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ADMIN', it:[['configuracoes','Configurações','⚙️'],['usuarios','Usuários','👤']]},
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
-      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
+      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
       social
@@ -7590,6 +7592,7 @@ window.abrirBebidaModal=function(beb, mode){
   function menuClick(id,b){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
+    if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id==='prosp-dash'){ navegarPara('prosp-dash'); if(typeof carregarProspDash==='function') carregarProspDash(); return; }
     if(id==='prospeccao-empresas'){ navegarPara('prospeccao-empresas'); if(typeof carregarProspEmpresas==='function') carregarProspEmpresas(); return; }
@@ -7629,6 +7632,7 @@ window.abrirBebidaModal=function(beb, mode){
   function menuClick(id,b){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
+    if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id==='prosp-dash'){ navegarPara('prosp-dash'); if(typeof carregarProspDash==='function') carregarProspDash(); return; }
     if(id==='prospeccao-empresas'){ navegarPara('prospeccao-empresas'); if(typeof carregarProspEmpresas==='function') carregarProspEmpresas(); return; }
@@ -7667,7 +7671,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ADMIN', it:[['configuracoes','Configurações','⚙️'],['usuarios','Usuários','👤']]},
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
-      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
+      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
       social
@@ -7966,4 +7970,185 @@ window.abrirBebidaModal=function(beb, mode){
       +'</div></div>';
   }
   window.carregarProspDash=carregarProspDash;
+})();
+
+/* ===== FINANCEIRO: Forcast (forecast de vendas) ===== */
+(function(){
+  var main=document.querySelector('.app-main'); if(!main) return;
+  if(!document.getElementById('page-forecast')){
+    var p=document.createElement('div'); p.id='page-forecast'; p.className='page';
+    p.innerHTML='<div class="app-header"><h2>📈 Forcast</h2></div><div class="page-content"><div id="forecast-root"></div></div>';
+    main.appendChild(p);
+  }
+  var CSSID='css-forecast'; var old=document.getElementById(CSSID); if(old) old.remove();
+  var st=document.createElement('style'); st.id=CSSID;
+  st.textContent='#page-forecast .page-content{max-width:none;margin:0;padding:12px 16px}'
+    +'#forecast-modal table.tabela-contatos td{padding:6px 8px}'
+    +'#forecast-modal table.tabela-contatos input,#forecast-modal table.tabela-contatos select{padding:5px 6px;border:1px solid var(--border,#ccc);border-radius:6px;font-size:13px}';
+  document.head.appendChild(st);
+
+  var FC_PROD=['Hardware','Serviços Profissionais','Licença'];
+  var FC_CLASSES={'Hardware':['Agenciamento','Revenda'],'Serviços Profissionais':['Serviço de engenharia','Desenvolvimento','Terceiros'],'Licença':['H1','Terceiro']};
+  var FC_STATUS=['Forcast','Vendido','Arquivado'];
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function money(n){ return 'R$ '+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtBR(iso){ if(!iso) return '—'; var a=(''+iso).split('-'); if(a.length<3) return iso; return a[2]+'/'+a[1]+'/'+a[0]; }
+  function fcCalc(it){
+    var q=parseFloat(it.quantidade)||0, cu=parseFloat(it.valor_custo)||0, ve=parseFloat(it.valor_venda)||0;
+    var mensal=(it.tipo_linha==='Mensal'); var m=mensal?(parseInt(it.meses)||1):1;
+    return {totalProjeto:q*ve*m, totalMensal:mensal?(q*ve):0, margem:ve>0?((ve-cu)/ve*100):0, mensal:mensal};
+  }
+  function fcTotais(itens){ var tm=0,tp=0; (itens||[]).forEach(function(it){ var c=fcCalc(it); tm+=c.totalMensal; tp+=c.totalProjeto; }); return {mensal:tm,total:tp}; }
+
+  async function carregarForecast(){
+    var root=document.getElementById('forecast-root'); if(!root) return;
+    root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+    try{ window._forecast=await _authFetch('GET','/fin/forecast')||[]; }
+    catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
+    renderForecastList();
+  }
+  window.carregarForecast=carregarForecast;
+
+  function renderForecastList(){
+    var root=document.getElementById('forecast-root'); if(!root) return;
+    var lista=window._forecast||[];
+    var anos=Array.from(new Set(lista.map(function(f){return (f.previsao_fechamento||'').slice(0,4);}).filter(Boolean))).sort().reverse();
+    var ano=window._fcAno||'';
+    var filt=lista.filter(function(f){ return !ano || (f.previsao_fechamento||'').slice(0,4)===ano; });
+    var anoBtns='<button class="btn btn-sm '+(!ano?'btn-primary':'btn-secondary')+'" data-fcano="">Todos</button>'+anos.map(function(a){ return '<button class="btn btn-sm '+(ano===a?'btn-primary':'btn-secondary')+'" data-fcano="'+a+'">'+a+'</button>'; }).join('');
+    var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="text-sm text-muted">Ano (previsão):</span>'+anoBtns+'</div><button class="btn btn-primary btn-sm" data-fcact="nova">＋ Novo forecast</button></div>';
+    var rows=filt.map(function(f){
+      var t=fcTotais(f.itens);
+      var col=f.status==='Vendido'?'#16a34a':(f.status==='Arquivado'?'#9ca3af':'#2563eb');
+      return '<tr'+(f.status==='Arquivado'?' style="opacity:.55"':'')+'>'
+        +'<td>'+esc(f.id_lead||'—')+'</td>'
+        +'<td><a href="#" data-fcact="ver" data-id="'+f.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(f.cliente||'(sem cliente)')+'</a></td>'
+        +'<td><span style="background:'+col+'22;color:'+col+';padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">'+esc(f.status||'Forcast')+'</span></td>'
+        +'<td>'+fmtBR(f.previsao_fechamento)+'</td>'
+        +'<td style="text-align:center">'+(f.pct_fechamento||0)+'%</td>'
+        +'<td>'+esc(f.tipo||'—')+'</td>'
+        +'<td style="text-align:right">'+money(t.mensal)+'</td>'
+        +'<td style="text-align:right;font-weight:600">'+money(t.total)+'</td>'
+        +'<td style="text-align:center;white-space:nowrap"><button class="fel-ic" data-fcact="editar" data-id="'+f.id+'" title="Editar">✏️</button><button class="fel-ic" data-fcact="arquivar" data-id="'+f.id+'" title="Arquivar">📦</button><button class="fel-ic" data-fcact="del" data-id="'+f.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td>'
+      +'</tr>';
+    }).join('');
+    var head='<thead><tr><th>ID Lead</th><th>Cliente</th><th>Status</th><th>Prev. Fechamento</th><th>% Fech.</th><th>Tipo</th><th style="text-align:right">Valor Mensal</th><th style="text-align:right">Valor Total</th><th></th></tr></thead>';
+    root.innerHTML=toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum forecast</td></tr>')+'</tbody></table>';
+  }
+
+  function abrirForecastModal(fc){
+    var state={ id:(fc&&fc.id)||null, data:JSON.parse(JSON.stringify(Object.assign({itens:[]}, fc||{}))) };
+    if(!state.data.itens || !state.data.itens.length){
+      state.data.itens=FC_PROD.map(function(pr){ return {produto:pr,classe:'',tipo_linha:'Projeto',quantidade:1,valor_custo:0,valor_venda:0,meses:1}; });
+    }
+    if(!state.data.status) state.data.status='Forcast';
+    var ov=document.getElementById('forecast-modal'); if(ov) ov.remove();
+    ov=document.createElement('div'); ov.id='forecast-modal';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto';
+    document.body.appendChild(ov);
+    function fechar(){ ov.remove(); carregarForecast(); }
+    function val(id){ var el=document.getElementById(id); return el?el.value:''; }
+    function classeOpts(prod,v){ var arr=FC_CLASSES[prod]||[]; return '<option value="">—</option>'+arr.map(function(c){ return '<option'+(v===c?' selected':'')+'>'+esc(c)+'</option>'; }).join(''); }
+    function itemRow(it,idx){
+      var c=fcCalc(it), mensal=(it.tipo_linha==='Mensal');
+      var prodOpts=FC_PROD.map(function(pr){ return '<option'+(it.produto===pr?' selected':'')+'>'+esc(pr)+'</option>'; }).join('');
+      return '<tr class="fc-item" data-idx="'+idx+'">'
+        +'<td><select class="fc-prod">'+prodOpts+'</select></td>'
+        +'<td><select class="fc-classe">'+classeOpts(it.produto,it.classe)+'</select></td>'
+        +'<td><select class="fc-tipo"><option'+(!mensal?' selected':'')+'>Projeto</option><option'+(mensal?' selected':'')+'>Mensal</option></select></td>'
+        +'<td>'+(mensal?'<input class="fc-meses" type="number" min="1" value="'+(it.meses||1)+'" style="width:56px">':'<span class="text-muted">—</span>')+'</td>'
+        +'<td><input class="fc-qtd" type="number" min="0" step="1" value="'+(it.quantidade!=null?it.quantidade:1)+'" style="width:64px"></td>'
+        +'<td><input class="fc-custo" type="number" min="0" step="0.01" value="'+(it.valor_custo!=null?it.valor_custo:0)+'" style="width:96px"></td>'
+        +'<td><input class="fc-venda" type="number" min="0" step="0.01" value="'+(it.valor_venda!=null?it.valor_venda:0)+'" style="width:96px"></td>'
+        +'<td class="fc-margem" style="text-align:right">'+c.margem.toFixed(1)+'%</td>'
+        +'<td class="fc-tmensal" style="text-align:right">'+money(c.totalMensal)+'</td>'
+        +'<td class="fc-tprojeto" style="text-align:right;font-weight:600">'+money(c.totalProjeto)+'</td>'
+        +'<td style="text-align:center"><button class="fc-del" title="Remover" style="border:none;background:none;cursor:pointer;color:var(--danger)">🗑️</button></td>'
+      +'</tr>';
+    }
+    function renderItens(){ var c=document.getElementById('fc-itens'); if(c) c.innerHTML=(state.data.itens||[]).map(function(it,idx){return itemRow(it,idx);}).join(''); }
+    function syncItens(){
+      var arr=[];
+      ov.querySelectorAll('.fc-item').forEach(function(el){
+        function g(sel){ var x=el.querySelector(sel); return x?x.value:null; }
+        var tipo=g('.fc-tipo')||'Projeto';
+        arr.push({ produto:g('.fc-prod')||null, classe:g('.fc-classe')||null, tipo_linha:tipo,
+          quantidade:parseFloat(g('.fc-qtd'))||0, valor_custo:parseFloat(g('.fc-custo'))||0, valor_venda:parseFloat(g('.fc-venda'))||0,
+          meses:(tipo==='Mensal')?(parseInt((el.querySelector('.fc-meses')||{}).value)||1):1 });
+      });
+      state.data.itens=arr;
+    }
+    function recompute(){
+      var tm=0,tp=0;
+      ov.querySelectorAll('.fc-item').forEach(function(el){
+        var tipo=(el.querySelector('.fc-tipo')||{}).value||'Projeto';
+        var q=parseFloat((el.querySelector('.fc-qtd')||{}).value)||0;
+        var cu=parseFloat((el.querySelector('.fc-custo')||{}).value)||0;
+        var ve=parseFloat((el.querySelector('.fc-venda')||{}).value)||0;
+        var m=(tipo==='Mensal')?(parseInt((el.querySelector('.fc-meses')||{}).value)||1):1;
+        var tpj=q*ve*m, tmn=(tipo==='Mensal')?q*ve:0, mg=ve>0?((ve-cu)/ve*100):0;
+        el.querySelector('.fc-margem').textContent=mg.toFixed(1)+'%';
+        el.querySelector('.fc-tmensal').textContent=money(tmn);
+        el.querySelector('.fc-tprojeto').textContent=money(tpj);
+        tm+=tmn; tp+=tpj;
+      });
+      var fm=document.getElementById('fc-foot-mensal'), ft=document.getElementById('fc-foot-total');
+      if(fm) fm.textContent=money(tm); if(ft) ft.textContent=money(tp);
+    }
+    async function salvar(){
+      syncItens();
+      var payload={ id_lead:val('fh-idlead')||null, cliente:val('fh-cliente')||null, status:val('fh-status')||'Forcast',
+        previsao_fechamento:val('fh-prev')||null, pct_fechamento:parseInt(val('fh-pct'))||0, tipo:val('fh-tipo')||null, itens:state.data.itens };
+      try{
+        if(state.id){ state.data=await _authFetch('PATCH','/fin/forecast/'+state.id,payload); }
+        else { var r=await _authFetch('POST','/fin/forecast',payload); state.data=r; state.id=r.id; }
+        toast('Forecast salvo','success'); render();
+      }catch(err){ toast('Erro: '+err.message,'error'); }
+    }
+    function render(){
+      var d=state.data;
+      var statusOpts=FC_STATUS.map(function(x){ return '<option'+(d.status===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('');
+      var tipoOpts=['Projeto','Hardware'].map(function(t){ return '<option'+(d.tipo===t?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
+      ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:1000px;width:100%;max-height:92vh;display:flex;flex-direction:column">'
+        +'<div style="flex-shrink:0;background:#fff;border-bottom:1px solid var(--border);border-radius:12px 12px 0 0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 style="margin:0">'+(state.id?'Editar forecast':'Novo forecast')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-fx="close">Fechar</button><button class="btn btn-sm btn-primary" data-fx="salvar">💾 Salvar</button></div></div>'
+        +'<div style="overflow:auto;padding:18px;flex:1;min-height:0">'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">ID Lead</label><input id="fh-idlead" class="form-control" value="'+esc(d.id_lead||'')+'"></div><div class="form-group" style="flex:2;min-width:180px"><label class="form-label">Cliente</label><input id="fh-cliente" class="form-control" value="'+esc(d.cliente||'')+'"></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Status</label><select id="fh-status" class="form-control">'+statusOpts+'</select></div></div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:160px"><label class="form-label">Previsão de Fechamento</label><input id="fh-prev" type="date" class="form-control" value="'+(d.previsao_fechamento||'')+'"></div><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">% Fechamento</label><input id="fh-pct" type="number" min="0" max="100" class="form-control" value="'+(d.pct_fechamento!=null?d.pct_fechamento:'')+'"></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Tipo</label><select id="fh-tipo" class="form-control"><option value="">—</option>'+tipoOpts+'</select></div></div>'
+        +'<hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Produtos</b><button class="btn btn-sm btn-secondary" data-fx="add">＋ Adicionar linha</button></div>'
+        +'<div style="overflow-x:auto"><table class="tabela-contatos" style="min-width:860px"><thead><tr><th>Produto</th><th>Classe</th><th>Tipo</th><th>Meses</th><th>Qtd</th><th>Custo</th><th>Venda</th><th style="text-align:right">Margem</th><th style="text-align:right">Total Mensal</th><th style="text-align:right">Total Projeto</th><th></th></tr></thead><tbody id="fc-itens"></tbody><tfoot><tr><td colspan="8" style="text-align:right;font-weight:700">Totais:</td><td id="fc-foot-mensal" style="text-align:right;font-weight:700">R$ 0,00</td><td id="fc-foot-total" style="text-align:right;font-weight:700">R$ 0,00</td><td></td></tr></tfoot></table></div>'
+        +'</div></div>';
+      renderItens(); recompute();
+    }
+    ov.addEventListener('input', function(e){ if(e.target.closest('.fc-item')) recompute(); });
+    ov.addEventListener('change', function(e){
+      var row=e.target.closest('.fc-item');
+      if(row && (e.target.classList.contains('fc-prod')||e.target.classList.contains('fc-tipo'))){ syncItens(); renderItens(); recompute(); return; }
+      if(row){ recompute(); }
+    });
+    ov.addEventListener('click', async function(e){
+      if(e.target===ov){ fechar(); return; }
+      var del=e.target.closest('.fc-del'); if(del){ syncItens(); var idx=parseInt(del.closest('.fc-item').getAttribute('data-idx')); state.data.itens.splice(idx,1); if(!state.data.itens.length) state.data.itens=[{produto:'Hardware',classe:'',tipo_linha:'Projeto',quantidade:1,valor_custo:0,valor_venda:0,meses:1}]; renderItens(); recompute(); return; }
+      var x=e.target.closest('[data-fx]'); if(!x) return; var act=x.getAttribute('data-fx');
+      if(act==='close') fechar();
+      else if(act==='add'){ syncItens(); state.data.itens.push({produto:'Hardware',classe:'',tipo_linha:'Projeto',quantidade:1,valor_custo:0,valor_venda:0,meses:1}); renderItens(); recompute(); }
+      else if(act==='salvar'){ await salvar(); }
+    });
+    render();
+  }
+  window.abrirForecastModal=abrirForecastModal;
+
+  if(!window._forecastBound){
+    window._forecastBound=true;
+    document.addEventListener('click', function(e){
+      var an=e.target.closest && e.target.closest('#forecast-root [data-fcano]'); if(an){ window._fcAno=an.getAttribute('data-fcano'); renderForecastList(); return; }
+      var b=e.target.closest && e.target.closest('#forecast-root [data-fcact]'); if(!b) return; e.preventDefault();
+      var act=b.getAttribute('data-fcact'), id=b.getAttribute('data-id');
+      if(act==='nova'){ abrirForecastModal(null); return; }
+      var f=(window._forecast||[]).filter(function(x){return x.id===id;})[0];
+      if(act==='ver'||act==='editar'){ if(f) abrirForecastModal(f); return; }
+      if(act==='arquivar'){ if(f && confirm('Arquivar este forecast?')){ _authFetch('PATCH','/fin/forecast/'+id,{status:'Arquivado'}).then(carregarForecast).catch(function(err){toast(err.message,'error');}); } return; }
+      if(act==='del'){ if(confirm('Excluir este forecast?')){ _authFetch('DELETE','/fin/forecast/'+id).then(carregarForecast).catch(function(err){toast(err.message,'error');}); } return; }
+    });
+  }
 })();
