@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, Integer, Float, Boolean, ForeignKey, text
+from sqlalchemy import Column, String, Text, DateTime, Integer, Float, Boolean, ForeignKey, text, Date
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from ..database import Base
@@ -130,6 +130,10 @@ class Oportunidade(Base):
     marcadores = Column(JSONB, default=list)
     origem = Column(String(80))
     tipo = Column(String(40))
+    numero = Column(Integer)
+    farol = Column(String(10), default="frio", server_default=text("'frio'"))
+    data_tarefa = Column(Date)
+    data_entrada_etapa = Column(DateTime, default=datetime.utcnow)
     sinaleiro = Column(String(10), default="red", server_default=text("'red'"))
     ordem = Column(Integer, default=0)
     arquivado = Column(Boolean, default=False, server_default=text("false"))

@@ -1,5 +1,7 @@
 import io
 from uuid import UUID
+from datetime import datetime, date
+from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
@@ -332,12 +334,14 @@ def _funil_out(f):
 
 
 def _op_out(o):
-    return {"id": str(o.id), "funil_id": str(o.funil_id), "etapa": o.etapa, "titulo": o.titulo,
+    dias = (datetime.utcnow() - o.data_entrada_etapa).days if o.data_entrada_etapa else None
+    return {"id": str(o.id), "funil_id": str(o.funil_id), "numero": o.numero, "etapa": o.etapa, "titulo": o.titulo,
             "empresa_id": str(o.empresa_id) if o.empresa_id else None,
             "pessoa_id": str(o.pessoa_id) if o.pessoa_id else None,
             "vendedor": o.vendedor, "marcadores": o.marcadores or [], "origem": o.origem, "tipo": o.tipo,
-            "sinaleiro": o.sinaleiro or "red", "ordem": o.ordem or 0, "arquivado": o.arquivado,
-            "criado_em": o.criado_em.isoformat() if o.criado_em else None}
+            "farol": o.farol or "frio", "sinaleiro": o.sinaleiro or "red", "ordem": o.ordem or 0,
+            "arquivado": o.arquivado, "data_tarefa": o.data_tarefa.isoformat() if o.data_tarefa else None,
+            "dias_etapa": dias, "criado_em": o.criado_em.isoformat() if o.criado_em else None}
 
 
 @router.get("/funis")
@@ -368,6 +372,15 @@ def deletar_funil(fid: UUID, db: Session = Depends(get_db), _=Depends(get_curren
     if f: db.delete(f); db.commit()
 
 
+@router.post("/funis/{fid}/duplicar", status_code=201)
+def duplicar_funil(fid: UUID, dados: dict = Body(default={}), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = db.query(Funil).filter(Funil.id == fid).first()
+    if not f: raise HTTPException(404, "Funil nao encontrado")
+    novo = Funil(nome=(dados or {}).get("nome") or (f.nome + " (cópia)"), etapas=list(f.etapas or []), ordem=(f.ordem or 0) + 1)
+    db.add(novo); db.commit(); db.refresh(novo)
+    return _funil_out(novo)
+
+
 @router.get("/oportunidades")
 def listar_oportunidades(funil_id: str | None = None, incluir_arquivadas: bool = False,
                          db: Session = Depends(get_db), _=Depends(get_current_user)):
@@ -379,10 +392,14 @@ def listar_oportunidades(funil_id: str | None = None, incluir_arquivadas: bool =
 
 @router.post("/oportunidades", status_code=201)
 def criar_oportunidade(dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    maxn = db.query(func.max(Oportunidade.numero)).scalar() or 0
+    dt = dados.get("data_tarefa")
     o = Oportunidade(funil_id=dados.get("funil_id"), etapa=dados.get("etapa"), titulo=dados.get("titulo"),
                      empresa_id=dados.get("empresa_id"), pessoa_id=dados.get("pessoa_id"),
                      vendedor=dados.get("vendedor"), marcadores=dados.get("marcadores") or [],
-                     origem=dados.get("origem"), tipo=dados.get("tipo"), sinaleiro=dados.get("sinaleiro") or "red")
+                     origem=dados.get("origem"), tipo=dados.get("tipo"), farol=dados.get("farol") or "frio",
+                     numero=maxn + 1, data_entrada_etapa=datetime.utcnow(),
+                     data_tarefa=date.fromisoformat(dt) if dt else None)
     db.add(o); db.commit(); db.refresh(o)
     return _op_out(o)
 
@@ -391,7 +408,11 @@ def criar_oportunidade(dados: dict = Body(...), db: Session = Depends(get_db), _
 def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
     o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
     if not o: raise HTTPException(404, "Oportunidade nao encontrada")
-    for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "sinaleiro", "ordem", "arquivado"):
+    if "etapa" in dados and dados["etapa"] and dados["etapa"] != o.etapa:
+        o.data_entrada_etapa = datetime.utcnow()
+    if "data_tarefa" in dados:
+        o.data_tarefa = date.fromisoformat(dados["data_tarefa"]) if dados.get("data_tarefa") else None
+    for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "farol", "sinaleiro", "ordem", "arquivado"):
         if k in dados: setattr(o, k, dados[k])
     db.commit(); db.refresh(o)
     return _op_out(o)
