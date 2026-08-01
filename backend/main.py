@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from .database import engine, Base
 from .models import *  # noqa
-from .routers import auth, empresas, contatos, categorias, campos_customizados, configuracoes, dashboard, ocr, perfis_exportacao, usuarios, publicacoes, resumo, cervejas, links, galerias, cofre, redes, financeiro, operacoes, prospeccao
+from .routers import auth, empresas, contatos, categorias, campos_customizados, configuracoes, dashboard, ocr, perfis_exportacao, usuarios, publicacoes, resumo, cervejas, links, galerias, cofre, redes, financeiro, operacoes, prospeccao, proposta
 from .config import get_settings
 
 settings = get_settings()
@@ -57,6 +57,7 @@ app.include_router(redes.router)
 app.include_router(financeiro.router)
 app.include_router(operacoes.router)
 app.include_router(prospeccao.router)
+app.include_router(proposta.router)
 
 app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
