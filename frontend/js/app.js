@@ -8438,17 +8438,15 @@ window.abrirBebidaModal=function(beb, mode){
   var st=document.createElement('style'); st.id=CSSID;
   st.textContent='#page-funil .page-content{max-width:none;margin:0;padding:12px 16px}'
     +'.fn-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}'
-    +'.fn-col{flex:0 0 260px;background:var(--surface-2,#f3f4f6);border-radius:12px;padding:8px}'
+    +'.fn-col{flex:0 0 250px;background:var(--surface-2,#f3f4f6);border-radius:12px;padding:8px}'
     +'.fn-col-h{font-weight:700;font-size:13px;padding:4px 6px 8px;display:flex;justify-content:space-between;align-items:center}'
-    +'.fn-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:8px 10px;margin-bottom:8px}'
-    +'.fn-tag{display:inline-block;background:#e0e7ff;color:#3730a3;border-radius:10px;padding:1px 7px;font-size:11px;margin:2px 2px 0 0}'
-    +'.fn-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}';
+    +'.fn-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:8px 10px;margin-bottom:8px}';
   document.head.appendChild(st);
 
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function ovOpen(html){ var ov=document.createElement('div'); ov.className='prop-ov'; ov.innerHTML='<div class="prop-mod">'+html+'</div>'; document.body.appendChild(ov); return ov; }
   function v(id){ var el=document.getElementById(id); return el?el.value:''; }
-  var SINC={red:'#dc2626',yellow:'#f59e0b',green:'#16a34a'};
+  function hojeISO(){ return new Date(Date.now()-3*3600*1000).toISOString().slice(0,10); }
 
   async function opConfig(){
     var oc={}; var ks=['op_marcadores','op_origem','op_tipo','op_vendedores'];
@@ -8456,15 +8454,29 @@ window.abrirBebidaModal=function(beb, mode){
     window._opCfg=oc; return oc;
   }
 
+  function taskIcon(o){
+    if(!o.data_tarefa) return '<span title="Sem tarefa programada" style="color:#cbd5e1">📅</span>';
+    if(o.data_tarefa < hojeISO()) return '<span title="Tarefa vencida: '+o.data_tarefa+'" style="color:#dc2626">📅</span>';
+    return '<span title="Tarefa programada: '+o.data_tarefa+'" style="color:#2563eb">📅</span>';
+  }
+  function farolTag(f){
+    var m={quente:['Quente','#dc2626'],morno:['Morno','#f59e0b'],frio:['Frio','#2563eb']};
+    var x=m[f||'frio']||m.frio;
+    return '<span style="display:inline-flex;align-items:center;gap:3px;background:'+x[1]+'22;color:'+x[1]+';border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600">🌡️'+x[0]+'</span>';
+  }
+  function avatar(nome){
+    var ini=((nome||'').trim().charAt(0)||'?').toUpperCase();
+    return '<span title="'+esc(nome||'sem vendedor')+'" style="width:22px;height:22px;border-radius:50%;background:#6366f1;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 auto">'+esc(ini)+'</span>';
+  }
   function opCard(o, etapas){
     var emp=(window._propEmp||{})[o.empresa_id]||'';
-    var sin=SINC[o.sinaleiro||'red']||SINC.red;
-    var tags=(o.marcadores||[]).map(function(m){ return '<span class="fn-tag">'+esc(m)+'</span>'; }).join('');
+    var num=o.numero?('#'+String(o.numero).padStart(3,'0')):'';
+    var dias=(o.dias_etapa!=null)?(o.dias_etapa+'d'):'';
     var moveOpts=etapas.map(function(et){ return '<option'+(o.etapa===et?' selected':'')+'>'+esc(et)+'</option>'; }).join('');
-    return '<div class="fn-card"><div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start"><b style="font-size:13px"><a href="#" data-fnact="editar" data-id="'+o.id+'" style="color:inherit;text-decoration:none">'+esc(o.titulo||'(sem título)')+'</a></b><span class="fn-dot" style="background:'+sin+'"></span></div>'
-      +(emp?'<div class="text-sm text-muted">'+esc(emp)+'</div>':'')
-      +((o.tipo||o.vendedor)?'<div style="font-size:11px;color:#6b7280">'+esc(o.tipo||'')+(o.vendedor?' · '+esc(o.vendedor):'')+'</div>':'')
-      +(tags?'<div style="margin-top:2px">'+tags+'</div>':'')
+    return '<div class="fn-card">'
+      +'<div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start"><b style="font-size:13px;line-height:1.2"><a href="#" data-fnact="editar" data-id="'+o.id+'" style="color:inherit;text-decoration:none">'+esc(o.titulo||'(sem título)')+'</a>'+(num?' <span class="text-sm text-muted">'+num+'</span>':'')+'</b><span style="display:flex;gap:6px;align-items:center;white-space:nowrap">'+taskIcon(o)+'<a href="#" data-fnact="editar" data-id="'+o.id+'" title="Editar" style="text-decoration:none">✏️</a></span></div>'
+      +(emp?'<div class="text-sm text-muted" style="margin:2px 0">'+esc(emp)+'</div>':'')
+      +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px">'+avatar(o.vendedor)+farolTag(o.farol)+'<span style="margin-left:auto;font-size:11px;color:#6b7280">'+dias+'</span></div>'
       +'<div style="display:flex;gap:4px;margin-top:6px;align-items:center"><select class="fn-move" data-id="'+o.id+'" style="flex:1;font-size:11px;padding:2px 4px;border:1px solid var(--border,#ccc);border-radius:6px">'+moveOpts+'</select><button class="fel-ic" data-fnact="arquivar" data-id="'+o.id+'" title="Arquivar">📦</button><button class="fel-ic" data-fnact="del" data-id="'+o.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></div>'
     +'</div>';
   }
@@ -8474,7 +8486,7 @@ window.abrirBebidaModal=function(beb, mode){
     root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
     var funis=[]; try{ funis=await _authFetch('GET','/proposta/funis')||[]; }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
     window._funis=funis;
-    if(!funis.length){ root.innerHTML='<p class="text-sm text-muted">Nenhum funil cadastrado.</p>'; return; }
+    if(!funis.length){ root.innerHTML='<p class="text-sm text-muted">Nenhum funil cadastrado. Crie em Configurações.</p>'; return; }
     var fid=window._funilSel||funis[0].id;
     var funil=funis.filter(function(x){return x.id===fid;})[0]||funis[0];
     window._funilSel=funil.id; window._funilAtivo=funil;
@@ -8487,7 +8499,7 @@ window.abrirBebidaModal=function(beb, mode){
       var cards=ops.filter(function(o){return o.etapa===et;});
       var cardsHtml=cards.map(function(o){ return opCard(o,etapas); }).join('')||'<div class="text-sm text-muted" style="padding:6px">—</div>';
       return '<div class="fn-col"><div class="fn-col-h"><span>'+esc(et)+'</span><span class="text-sm text-muted">'+cards.length+'</span></div>'+cardsHtml+'</div>';
-    }).join('')||'<p class="text-sm text-muted">Este funil não tem etapas.</p>';
+    }).join('')||'<p class="text-sm text-muted">Este funil não tem etapas. Configure em Configurações.</p>';
     root.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">'+sel+'<button class="btn btn-primary btn-sm" data-fnact="nova">＋ Adicionar Oportunidade</button></div><div class="fn-board">'+colsHtml+'</div>';
   }
   window.carregarFunil=carregarFunil;
@@ -8503,14 +8515,16 @@ window.abrirBebidaModal=function(beb, mode){
     function pesOpts(empId,seln){ return '<option value="">— contato —</option>'+pes.filter(function(x){return !empId||x.empresa_id===empId;}).map(function(x){ return '<option value="'+x.id+'"'+(seln===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join(''); }
     function listOpts(arr,val,ph){ return '<option value="">'+ph+'</option>'+(arr||[]).map(function(x){ return '<option'+(val===x?' selected':'')+'>'+esc(x)+'</option>'; }).join(''); }
     var etapaOpts=(funil.etapas||[]).map(function(et){ return '<option'+(op.etapa===et?' selected':'')+'>'+esc(et)+'</option>'; }).join('');
+    var farolOpts=[['quente','Quente'],['morno','Morno'],['frio','Frio']].map(function(x){ return '<option value="'+x[0]+'"'+((op.farol||'frio')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('');
     var mkr=oc.op_marcadores||[];
     var mkrHtml=mkr.length?mkr.map(function(m){ var on=(op.marcadores||[]).indexOf(m)>=0; return '<label style="margin:0 12px 4px 0;font-size:13px;display:inline-block"><input type="checkbox" class="op-mkr" value="'+esc(m)+'"'+(on?' checked':'')+'> '+esc(m)+'</label>'; }).join(''):'<span class="text-sm text-muted">Cadastre marcadores em COMERCIAL › Configurações.</span>';
-    var ov=ovOpen('<div class="hd"><h3 style="margin:0">'+(op.id?'Editar oportunidade':'Nova oportunidade')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-ox="close">Fechar</button><button class="btn btn-sm btn-primary" data-ox="salvar">💾 Salvar</button></div></div>'
+    var ov=ovOpen('<div class="hd"><h3 style="margin:0">'+(op.id?('Oportunidade'+(op.numero?' #'+String(op.numero).padStart(3,"0"):'')):'Nova oportunidade')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-ox="close">Fechar</button><button class="btn btn-sm btn-primary" data-ox="salvar">💾 Salvar</button></div></div>'
       +'<div class="bd">'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:180px"><label class="form-label">Título</label><input id="op-titulo" class="form-control" value="'+esc(op.titulo||'')+'"></div><div class="form-group" style="flex:1;min-width:180px"><label class="form-label">Empresa</label><select id="op-emp" class="form-control">'+empOpts+'</select></div></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:180px"><label class="form-label">Contato</label><select id="op-pes" class="form-control">'+pesOpts(op.empresa_id,op.pessoa_id)+'</select></div><div class="form-group" style="flex:1;min-width:160px"><label class="form-label">Vendedor</label><select id="op-vend" class="form-control">'+listOpts(oc.op_vendedores,op.vendedor,'— vendedor —')+'</select></div></div>'
       +'<div class="form-group"><label class="form-label">Marcadores</label><div>'+mkrHtml+'</div></div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Origem</label><select id="op-ori" class="form-control">'+listOpts(oc.op_origem,op.origem,'— origem —')+'</select></div><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Tipo</label><select id="op-tipo" class="form-control">'+listOpts(oc.op_tipo,op.tipo,'— tipo —')+'</select></div><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Etapa</label><select id="op-etapa" class="form-control">'+etapaOpts+'</select></div></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Origem</label><select id="op-ori" class="form-control">'+listOpts(oc.op_origem,op.origem,'— origem —')+'</select></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Tipo</label><select id="op-tipo" class="form-control">'+listOpts(oc.op_tipo,op.tipo,'— tipo —')+'</select></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Etapa</label><select id="op-etapa" class="form-control">'+etapaOpts+'</select></div></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Farol</label><select id="op-farol" class="form-control">'+farolOpts+'</select></div><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Próxima tarefa</label><input id="op-tarefa" type="date" class="form-control" value="'+(op.data_tarefa||'')+'"></div></div>'
       +'</div>');
     ov.addEventListener('change', function(e){ if(e.target.id==='op-emp'){ var pe=document.getElementById('op-pes'); if(pe) pe.innerHTML=pesOpts(e.target.value,''); } });
     ov.addEventListener('click', async function(e){
@@ -8519,13 +8533,13 @@ window.abrirBebidaModal=function(beb, mode){
       if(act==='close'){ ov.remove(); return; }
       if(act==='salvar'){
         var mk=[]; ov.querySelectorAll('.op-mkr:checked').forEach(function(c){ mk.push(c.value); });
-        var body={ funil_id:funil.id, titulo:v('op-titulo'), empresa_id:v('op-emp')||null, pessoa_id:v('op-pes')||null, vendedor:v('op-vend')||null, marcadores:mk, origem:v('op-ori')||null, tipo:v('op-tipo')||null, etapa:v('op-etapa')||((funil.etapas||[])[0]||null) };
+        var body={ funil_id:funil.id, titulo:v('op-titulo'), empresa_id:v('op-emp')||null, pessoa_id:v('op-pes')||null, vendedor:v('op-vend')||null, marcadores:mk, origem:v('op-ori')||null, tipo:v('op-tipo')||null, etapa:v('op-etapa')||((funil.etapas||[])[0]||null), farol:v('op-farol')||'frio', data_tarefa:v('op-tarefa')||null };
         try{ if(op.id) await _authFetch('PATCH','/proposta/oportunidades/'+op.id,body); else await _authFetch('POST','/proposta/oportunidades',body); toast('Oportunidade salva','success'); ov.remove(); carregarFunil(); }catch(err){ toast('Erro: '+err.message,'error'); }
       }
     });
   }
 
-  /* ---- bloco Oportunidade dentro da Configurações (wrap do carregarPropConfig) ---- */
+  /* ---- Configurações: bloco Oportunidade + Configurar Funil (wrap do carregarPropConfig) ---- */
   async function renderOpCfg(){
     var root=document.getElementById('prop-config-root'); if(!root) return;
     var oc=await opConfig();
@@ -8536,8 +8550,23 @@ window.abrirBebidaModal=function(beb, mode){
     card.innerHTML='<div style="font-weight:600;margin-bottom:8px">Oportunidade (Funil)</div>'+bloco('Marcadores','op_marcadores')+bloco('Origem','op_origem')+bloco('Tipo','op_tipo')+bloco('Vendedores','op_vendedores');
     root.appendChild(card);
   }
+  async function renderFunilCfg(){
+    var root=document.getElementById('prop-config-root'); if(!root) return;
+    var funis=[]; try{ funis=await _authFetch('GET','/proposta/funis')||[]; }catch(e){}
+    window._cfgFunis=funis;
+    var old=document.getElementById('funil-cfg-card'); if(old) old.remove();
+    var card=document.createElement('div'); card.className='prop-card'; card.id='funil-cfg-card';
+    var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-weight:600">Configurar Funil (etapas)</div><button class="btn btn-sm btn-secondary" data-fcfg="novo-funil">＋ Novo funil</button></div>';
+    html+=funis.map(function(f){
+      var etHtml=(f.etapas||[]).map(function(et){ return '<span class="prop-chip">'+esc(et)+'<button data-fcfg="del-etapa" data-fid="'+f.id+'" data-v="'+esc(et)+'" title="Remover">×</button></span>'; }).join('')||'<span class="text-sm text-muted">sem etapas</span>';
+      return '<div style="border:1px solid var(--border,#eee);border-radius:10px;padding:10px;margin-bottom:8px"><div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input class="form-control fcfg-nome" data-fid="'+f.id+'" value="'+esc(f.nome)+'" style="flex:1;font-weight:600"><button class="btn btn-sm btn-secondary" data-fcfg="ren-funil" data-fid="'+f.id+'">Renomear</button><button class="btn btn-sm btn-secondary" data-fcfg="copiar-funil" data-fid="'+f.id+'">Copiar</button></div><div style="margin-bottom:6px">'+etHtml+'</div><div style="display:flex;gap:6px"><input class="form-control fcfg-etapa-inp" data-fid="'+f.id+'" placeholder="Nova etapa" style="flex:1"><button class="btn btn-sm btn-primary" data-fcfg="add-etapa" data-fid="'+f.id+'">+ Etapa</button></div></div>';
+    }).join('');
+    card.innerHTML=html; root.appendChild(card);
+  }
   var _origCfg=window.carregarPropConfig;
-  window.carregarPropConfig=async function(){ if(typeof _origCfg==='function') await _origCfg(); await renderOpCfg(); };
+  window.carregarPropConfig=async function(){ if(typeof _origCfg==='function') await _origCfg(); await renderOpCfg(); await renderFunilCfg(); };
+
+  function funById(id){ return (window._cfgFunis||[]).filter(function(x){return x.id===id;})[0]; }
 
   if(!window._funilBound){
     window._funilBound=true;
@@ -8551,6 +8580,13 @@ window.abrirBebidaModal=function(beb, mode){
       if(oc){ e.preventDefault(); var act=oc.getAttribute('data-opcfg'), k=oc.getAttribute('data-k');
         if(act==='add'){ var inp=oc.parentNode.querySelector('.op-add-inp'); var vv=(inp&&inp.value||'').trim(); if(!vv) return; var arr=((window._opCfg||{})[k]||[]).slice(); if(arr.indexOf(vv)<0) arr.push(vv); _authFetch('PUT','/proposta/config/'+k,{valor:arr}).then(renderOpCfg); return; }
         if(act==='del'){ var vv2=oc.getAttribute('data-v'); var arr=((window._opCfg||{})[k]||[]).filter(function(x){return x!==vv2;}); _authFetch('PUT','/proposta/config/'+k,{valor:arr}).then(renderOpCfg); return; } }
+      var fc=e.target.closest && e.target.closest('#prop-config-root [data-fcfg]');
+      if(fc){ e.preventDefault(); var fa=fc.getAttribute('data-fcfg'), fid=fc.getAttribute('data-fid');
+        if(fa==='novo-funil'){ var nn=prompt('Nome do novo funil:','Novo funil'); if(nn){ _authFetch('POST','/proposta/funis',{nome:nn,etapas:[]}).then(renderFunilCfg); } return; }
+        if(fa==='copiar-funil'){ var f=funById(fid); var nn2=prompt('Nome da cópia:', f?(f.nome+' (cópia)'):''); if(nn2){ _authFetch('POST','/proposta/funis/'+fid+'/duplicar',{nome:nn2}).then(renderFunilCfg); } return; }
+        if(fa==='ren-funil'){ var inp=document.querySelector('.fcfg-nome[data-fid="'+fid+'"]'); if(inp){ _authFetch('PATCH','/proposta/funis/'+fid,{nome:inp.value}).then(renderFunilCfg); } return; }
+        if(fa==='add-etapa'){ var ei=document.querySelector('.fcfg-etapa-inp[data-fid="'+fid+'"]'); var ev=(ei&&ei.value||'').trim(); if(!ev) return; var f2=funById(fid); var et=(f2&&f2.etapas||[]).slice(); if(et.indexOf(ev)<0) et.push(ev); _authFetch('PATCH','/proposta/funis/'+fid,{etapas:et}).then(renderFunilCfg); return; }
+        if(fa==='del-etapa'){ var dv=fc.getAttribute('data-v'); var f3=funById(fid); var et2=(f3&&f3.etapas||[]).filter(function(x){return x!==dv;}); _authFetch('PATCH','/proposta/funis/'+fid,{etapas:et2}).then(renderFunilCfg); return; } }
       var fb=e.target.closest && e.target.closest('#funil-root [data-fnact]');
       if(fb){ e.preventDefault(); var a=fb.getAttribute('data-fnact'), id=fb.getAttribute('data-id');
         if(a==='nova'){ abrirOpModal(null); return; }
