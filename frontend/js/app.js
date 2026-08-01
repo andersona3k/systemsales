@@ -4542,6 +4542,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
       {g:'PROSPECÇÃO', it:[['pitch','Pitch','🎯'],['saudacao','Saudação','👋'],['cadencia','Cadência','📅'],['felicitacoes','Felicitações','💬']]},
+      {g:'COMERCIAL', it:[['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦']]},
       social
     ];
     var socialIdx=GRUPOS.length-1;
@@ -4695,6 +4696,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
       {g:'PROSPECÇÃO', it:[['pitch','Pitch','🎯'],['saudacao','Saudação','👋'],['cadencia','Cadência','📅'],['felicitacoes','Felicitações','💬']]},
+      {g:'COMERCIAL', it:[['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦']]},
       social
     ];
     var socialIdx=GRUPOS.length-1;
@@ -4776,6 +4778,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['felicitacoes','Mensagem','💬'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️']]},
+      {g:'COMERCIAL', it:[['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦']]},
       social
     ];
     var html='<div class="desktop-nav-logo">📇 SGC</div><div style="font-size:10px;color:var(--text-muted);padding:0 12px 8px;margin-top:-4px">Sistema de Gestão Comercial</div>';
@@ -4801,6 +4804,9 @@ window.abrirBebidaModal=function(beb, mode){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
     if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
+    if(id==='propostas'){ navegarPara('propostas'); if(typeof carregarPropostas==='function') carregarPropostas(); return; }
+    if(id==='prop-modelos'){ navegarPara('prop-modelos'); if(typeof carregarPropModelos==='function') carregarPropModelos(); return; }
+    if(id==='prop-produtos'){ navegarPara('prop-produtos'); if(typeof carregarPropProdutos==='function') carregarPropProdutos(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id.indexOf('rede:')===0){
       var canal=id.slice(5); window.PUB_CANAL=canal;
@@ -7492,6 +7498,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
+      {g:'COMERCIAL', it:[['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦']]},
       social
     ];
     var html='<div class="desktop-nav-logo">📇 SGC</div><div style="font-size:10px;color:var(--text-muted);padding:0 12px 8px;margin-top:-4px">Sistema de Gestão Comercial</div>';
@@ -7517,6 +7524,9 @@ window.abrirBebidaModal=function(beb, mode){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
     if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
+    if(id==='propostas'){ navegarPara('propostas'); if(typeof carregarPropostas==='function') carregarPropostas(); return; }
+    if(id==='prop-modelos'){ navegarPara('prop-modelos'); if(typeof carregarPropModelos==='function') carregarPropModelos(); return; }
+    if(id==='prop-produtos'){ navegarPara('prop-produtos'); if(typeof carregarPropProdutos==='function') carregarPropProdutos(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id==='prosp-dash'){ navegarPara('prosp-dash'); if(typeof carregarProspDash==='function') carregarProspDash(); return; }
     if(id==='prospeccao-empresas'){ navegarPara('prospeccao-empresas'); if(typeof carregarProspEmpresas==='function') carregarProspEmpresas(); return; }
@@ -7568,6 +7578,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
+      {g:'COMERCIAL', it:[['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦']]},
       social
     ];
     var html='<div class="desktop-nav-logo">📇 SGC</div><div style="font-size:10px;color:var(--text-muted);padding:0 12px 8px;margin-top:-4px">Sistema de Gestão Comercial</div>';
@@ -7593,6 +7604,9 @@ window.abrirBebidaModal=function(beb, mode){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
     if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
+    if(id==='propostas'){ navegarPara('propostas'); if(typeof carregarPropostas==='function') carregarPropostas(); return; }
+    if(id==='prop-modelos'){ navegarPara('prop-modelos'); if(typeof carregarPropModelos==='function') carregarPropModelos(); return; }
+    if(id==='prop-produtos'){ navegarPara('prop-produtos'); if(typeof carregarPropProdutos==='function') carregarPropProdutos(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id==='prosp-dash'){ navegarPara('prosp-dash'); if(typeof carregarProspDash==='function') carregarProspDash(); return; }
     if(id==='prospeccao-empresas'){ navegarPara('prospeccao-empresas'); if(typeof carregarProspEmpresas==='function') carregarProspEmpresas(); return; }
@@ -7633,6 +7647,9 @@ window.abrirBebidaModal=function(beb, mode){
     if(id==='calendario'){ if(typeof navegarPara==='function') navegarPara('calendario'); if(typeof carregarCalendario==='function') carregarCalendario(); return; }
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); return; }
     if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); return; }
+    if(id==='propostas'){ navegarPara('propostas'); if(typeof carregarPropostas==='function') carregarPropostas(); return; }
+    if(id==='prop-modelos'){ navegarPara('prop-modelos'); if(typeof carregarPropModelos==='function') carregarPropModelos(); return; }
+    if(id==='prop-produtos'){ navegarPara('prop-produtos'); if(typeof carregarPropProdutos==='function') carregarPropProdutos(); return; }
     if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); return; }
     if(id==='prosp-dash'){ navegarPara('prosp-dash'); if(typeof carregarProspDash==='function') carregarProspDash(); return; }
     if(id==='prospeccao-empresas'){ navegarPara('prospeccao-empresas'); if(typeof carregarProspEmpresas==='function') carregarProspEmpresas(); return; }
@@ -7674,6 +7691,7 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
+      {g:'COMERCIAL', it:[['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦']]},
       social
     ];
     var html='<span class="nav-v9" style="display:none"></span><div class="desktop-nav-logo">📇 SGC</div><div style="font-size:10px;color:var(--text-muted);padding:0 12px 8px;margin-top:-4px">Sistema de Gestão Comercial</div>';
@@ -8153,6 +8171,181 @@ window.abrirBebidaModal=function(beb, mode){
       if(act==='ver'||act==='editar'){ if(f) abrirForecastModal(f); return; }
       if(act==='arquivar'){ if(f && confirm('Arquivar este forecast?')){ _authFetch('PATCH','/fin/forecast/'+id,{status:'Arquivado'}).then(carregarForecast).catch(function(err){toast(err.message,'error');}); } return; }
       if(act==='del'){ if(confirm('Excluir este forecast?')){ _authFetch('DELETE','/fin/forecast/'+id).then(carregarForecast).catch(function(err){toast(err.message,'error');}); } return; }
+    });
+  }
+})();
+
+/* ===== COMERCIAL: Propostas (Fatia 1b base) ===== */
+(function(){
+  var main=document.querySelector('.app-main'); if(!main) return;
+  [['propostas','📄 Propostas','propostas-root'],['prop-modelos','🧩 Modelos de Proposta','prop-modelos-root'],['prop-produtos','📦 Produtos (Proposta)','prop-produtos-root']].forEach(function(x){
+    if(!document.getElementById('page-'+x[0])){
+      var pg=document.createElement('div'); pg.id='page-'+x[0]; pg.className='page';
+      pg.innerHTML='<div class="app-header"><h2>'+x[1]+'</h2></div><div class="page-content"><div id="'+x[2]+'"></div></div>';
+      main.appendChild(pg);
+    }
+  });
+  var CSSID='css-proposta'; var old=document.getElementById(CSSID); if(old) old.remove();
+  var st=document.createElement('style'); st.id=CSSID;
+  st.textContent='#page-propostas .page-content,#page-prop-modelos .page-content,#page-prop-produtos .page-content{max-width:none;margin:0;padding:12px 16px}'
+    +'.prop-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto}'
+    +'.prop-mod{background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:92vh;display:flex;flex-direction:column}'
+    +'.prop-mod .bd{overflow:auto;padding:18px;flex:1;min-height:0}'
+    +'.prop-mod .hd{flex-shrink:0;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}'
+    +'.prop-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:14px 16px;margin-bottom:10px}'
+    +'.prop-blk{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border,#eee);font-size:14px}';
+  document.head.appendChild(st);
+
+  var CATS=[['equipamentos','Equipamentos'],['servicos','Serviços'],['software','Software'],['software_customizacao','Software - Customização'],['software_integracao','Software - Integração'],['produtos','Produtos']];
+  function catLabel(c){ for(var i=0;i<CATS.length;i++) if(CATS[i][0]===c) return CATS[i][1]; return c||'—'; }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function money(n,cur){ return ((cur==='USD')?'US$ ':'R$ ')+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function ovOpen(html){ var ov=document.createElement('div'); ov.className='prop-ov'; ov.innerHTML='<div class="prop-mod">'+html+'</div>'; document.body.appendChild(ov); return ov; }
+
+  /* ---- PRODUTOS ---- */
+  async function carregarPropProdutos(){
+    var root=document.getElementById('prop-produtos-root'); if(!root) return;
+    root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+    try{ window._propProd=await _authFetch('GET','/proposta/produtos')||[]; }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
+    var rows=(window._propProd||[]).map(function(p){
+      return '<tr><td>'+esc(catLabel(p.categoria))+'</td><td><a href="#" data-ppact="editar" data-id="'+p.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(p.nome)+'</a></td><td>'+esc(p.codigo||'—')+'</td><td>'+esc(p.moeda||'BRL')+'</td><td style="text-align:right">'+money(p.valor_unitario,p.moeda)+'</td><td style="text-align:center"><button class="fel-ic" data-ppact="editar" data-id="'+p.id+'" title="Editar">✏️</button><button class="fel-ic" data-ppact="del" data-id="'+p.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
+    }).join('');
+    root.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-primary btn-sm" data-ppact="novo">＋ Novo produto</button></div>'
+      +'<table class="tabela-contatos"><thead><tr><th>Categoria</th><th>Nome</th><th>Código</th><th>Moeda</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum produto</td></tr>')+'</tbody></table>';
+  }
+  window.carregarPropProdutos=carregarPropProdutos;
+  function abrirProdModal(prod){
+    prod=prod||{};
+    var catOpts=CATS.map(function(c){ return '<option value="'+c[0]+'"'+(prod.categoria===c[0]?' selected':'')+'>'+esc(c[1])+'</option>'; }).join('');
+    var ov=ovOpen('<div class="hd"><h3 style="margin:0">'+(prod.id?'Editar produto':'Novo produto')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-px="close">Fechar</button><button class="btn btn-sm btn-primary" data-px="salvar">💾 Salvar</button></div></div>'
+      +'<div class="bd">'
+      +'<div class="form-group"><label class="form-label">Nome</label><input id="pp-nome" class="form-control" value="'+esc(prod.nome||'')+'"></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Código</label><input id="pp-codigo" class="form-control" value="'+esc(prod.codigo||'')+'"></div><div class="form-group" style="flex:1;min-width:160px"><label class="form-label">Categoria</label><select id="pp-cat" class="form-control">'+catOpts+'</select></div></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:0 0 120px"><label class="form-label">Moeda</label><select id="pp-moeda" class="form-control"><option'+(prod.moeda!=='USD'?' selected':'')+'>BRL</option><option'+(prod.moeda==='USD'?' selected':'')+'>USD</option></select></div><div class="form-group" style="flex:1;min-width:140px"><label class="form-label">Valor unitário</label><input id="pp-valor" type="number" step="0.01" class="form-control" value="'+(prod.valor_unitario!=null?prod.valor_unitario:0)+'"></div></div>'
+      +'<div class="form-group"><label class="form-label">Info padrão</label><textarea id="pp-info" class="form-control" rows="2">'+esc(prod.info_padrao||'')+'</textarea></div>'
+      +'</div>');
+    ov.addEventListener('click', async function(e){
+      if(e.target===ov){ ov.remove(); return; }
+      var x=e.target.closest('[data-px]'); if(!x) return; var act=x.getAttribute('data-px');
+      if(act==='close'){ ov.remove(); return; }
+      if(act==='salvar'){
+        var body={ nome:document.getElementById('pp-nome').value, codigo:document.getElementById('pp-codigo').value, categoria:document.getElementById('pp-cat').value, moeda:document.getElementById('pp-moeda').value, valor_unitario:parseFloat(document.getElementById('pp-valor').value)||0, info_padrao:document.getElementById('pp-info').value };
+        try{ if(prod.id) await _authFetch('PATCH','/proposta/produtos/'+prod.id,body); else await _authFetch('POST','/proposta/produtos',body); toast('Produto salvo','success'); ov.remove(); carregarPropProdutos(); }catch(err){ toast('Erro: '+err.message,'error'); }
+      }
+    });
+  }
+
+  /* ---- MODELOS ---- */
+  async function carregarPropModelos(){
+    var root=document.getElementById('prop-modelos-root'); if(!root) return;
+    root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+    try{ window._propTpl=await _authFetch('GET','/proposta/templates')||[]; }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
+    var cards=(window._propTpl||[]).map(function(t){
+      var blk=(t.config&&t.config.blocos)||[]; var on=blk.filter(function(b){return b.ligado;}).length;
+      return '<div class="prop-card"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>'+esc(t.nome)+'</b> <span class="text-sm text-muted">· '+esc(t.tipo)+' · v'+t.versao+'</span><div class="text-sm text-muted">'+on+'/'+blk.length+' blocos ligados</div></div><button class="btn btn-sm btn-primary" data-pmact="config" data-id="'+t.id+'">Configurar</button></div></div>';
+    }).join('');
+    root.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-secondary btn-sm" data-pmact="novo">＋ Novo modelo</button></div>'+(cards||'<p class="text-sm text-muted">Nenhum modelo</p>');
+  }
+  window.carregarPropModelos=carregarPropModelos;
+  function abrirModeloModal(tpl){
+    tpl=tpl||{tipo:'venda',nome:'',config:{blocos:[],grupos_categorias:[]}};
+    var blk=(tpl.config&&tpl.config.blocos)||[];
+    var blkHtml=blk.map(function(b,i){ return '<label class="prop-blk"><input type="checkbox" class="pm-blk" data-i="'+i+'"'+(b.ligado?' checked':'')+'> '+esc(b.label||b.chave)+'</label>'; }).join('')||'<p class="text-sm text-muted">Sem blocos neste modelo.</p>';
+    var ov=ovOpen('<div class="hd"><h3 style="margin:0">'+(tpl.id?'Configurar modelo':'Novo modelo')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-mx="close">Fechar</button><button class="btn btn-sm btn-primary" data-mx="salvar">💾 Salvar</button></div></div>'
+      +'<div class="bd">'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:2;min-width:180px"><label class="form-label">Nome do modelo</label><input id="pm-nome" class="form-control" value="'+esc(tpl.nome||'')+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Tipo</label><select id="pm-tipo" class="form-control"><option'+(tpl.tipo==='venda'?' selected':'')+'>venda</option><option'+(tpl.tipo==='locacao'?' selected':'')+'>locacao</option></select></div></div>'
+      +'<div style="font-weight:600;margin:10px 0 4px">Blocos do modelo (booleanos)</div>'+blkHtml
+      +'</div>');
+    ov.addEventListener('click', async function(e){
+      if(e.target===ov){ ov.remove(); return; }
+      var x=e.target.closest('[data-mx]'); if(!x) return; var act=x.getAttribute('data-mx');
+      if(act==='close'){ ov.remove(); return; }
+      if(act==='salvar'){
+        var cfg=JSON.parse(JSON.stringify(tpl.config||{blocos:[],grupos_categorias:[]}));
+        if(!cfg.blocos) cfg.blocos=[];
+        ov.querySelectorAll('.pm-blk').forEach(function(cb){ var i=parseInt(cb.getAttribute('data-i')); if(cfg.blocos[i]) cfg.blocos[i].ligado=cb.checked; });
+        var body={ nome:document.getElementById('pm-nome').value, tipo:document.getElementById('pm-tipo').value, config:cfg };
+        try{ if(tpl.id) await _authFetch('PATCH','/proposta/templates/'+tpl.id,body); else await _authFetch('POST','/proposta/templates',body); toast('Modelo salvo','success'); ov.remove(); carregarPropModelos(); }catch(err){ toast('Erro: '+err.message,'error'); }
+      }
+    });
+  }
+
+  /* ---- PROPOSTAS ---- */
+  function nomeEmpresa(id){ var m=window._propEmp||{}; return m[id]||'—'; }
+  function nomePessoa(id){ var m=window._propPes||{}; return m[id]||'—'; }
+  async function carregarPropostas(){
+    var root=document.getElementById('propostas-root'); if(!root) return;
+    root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+    try{
+      var lista=await _authFetch('GET','/proposta/propostas')||[];
+      var emps=await _authFetch('GET','/prospeccao/empresas')||[];
+      var pes=await _authFetch('GET','/prospeccao/pessoas')||[];
+      window._propLista=lista; window._propEmpList=emps; window._propPesList=pes;
+      window._propEmp={}; emps.forEach(function(x){ window._propEmp[x.id]=x.nome; });
+      window._propPes={}; pes.forEach(function(x){ window._propPes[x.id]=x.nome; });
+    }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
+    var rows=(window._propLista||[]).map(function(p){
+      var stc=p.status==='aceita'?'#16a34a':(p.status==='enviada'?'#2563eb':(p.status==='expirada'?'#dc2626':'#9ca3af'));
+      return '<tr><td><a href="#" data-pract="editar" data-id="'+p.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(nomeEmpresa(p.empresa_id))+'</a></td><td>'+esc(nomePessoa(p.pessoa_id))+'</td><td>'+esc(p.tipo)+'</td><td><span style="background:'+stc+'22;color:'+stc+';padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">'+esc(p.status)+'</span></td><td>'+(p.data||'—')+'</td><td style="text-align:center">'+(p.validade_dias||'—')+'</td><td style="text-align:center"><button class="fel-ic" data-pract="editar" data-id="'+p.id+'" title="Editar">✏️</button><button class="fel-ic" data-pract="del" data-id="'+p.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
+    }).join('');
+    root.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-primary btn-sm" data-pract="nova">＋ Nova proposta</button></div>'
+      +'<table class="tabela-contatos"><thead><tr><th>Cliente</th><th>Contato</th><th>Tipo</th><th>Status</th><th>Data</th><th>Validade</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma proposta</td></tr>')+'</tbody></table>';
+  }
+  window.carregarPropostas=carregarPropostas;
+
+  async function abrirPropostaModal(prop){
+    if(!window._propTpl){ try{ window._propTpl=await _authFetch('GET','/proposta/templates')||[]; }catch(e){} }
+    if(!window._propEmpList){ try{ window._propEmpList=await _authFetch('GET','/prospeccao/empresas')||[]; }catch(e){} }
+    if(!window._propPesList){ try{ window._propPesList=await _authFetch('GET','/prospeccao/pessoas')||[]; }catch(e){} }
+    prop=prop||{status:'rascunho'};
+    var tpls=window._propTpl||[], emps=window._propEmpList||[], pes=window._propPesList||[];
+    var tplOpts='<option value="">— escolha —</option>'+tpls.map(function(t){ return '<option value="'+t.id+'"'+(prop.template_id===t.id?' selected':'')+'>'+esc(t.nome)+' ('+t.tipo+')</option>'; }).join('');
+    var empOpts='<option value="">— cliente —</option>'+emps.map(function(x){ return '<option value="'+x.id+'"'+(prop.empresa_id===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('');
+    function pessoaOpts(empId,sel){ return '<option value="">— contato —</option>'+pes.filter(function(x){return !empId||x.empresa_id===empId;}).map(function(x){ return '<option value="'+x.id+'"'+(sel===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join(''); }
+    var ov=ovOpen('<div class="hd"><h3 style="margin:0">'+(prop.id?'Editar proposta':'Nova proposta')+'</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-rx="close">Fechar</button><button class="btn btn-sm btn-primary" data-rx="salvar">💾 Salvar</button></div></div>'
+      +'<div class="bd">'
+      +'<div class="form-group"><label class="form-label">Modelo</label><select id="pr-tpl" class="form-control">'+tplOpts+'</select></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:180px"><label class="form-label">Cliente (Prospecção)</label><select id="pr-emp" class="form-control">'+empOpts+'</select></div><div class="form-group" style="flex:1;min-width:180px"><label class="form-label">Contato</label><select id="pr-pes" class="form-control">'+pessoaOpts(prop.empresa_id,prop.pessoa_id)+'</select></div></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:140px"><label class="form-label">Data</label><input id="pr-data" type="date" class="form-control" value="'+(prop.data||'')+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Validade (dias)</label><input id="pr-val" type="number" class="form-control" value="'+(prop.validade_dias!=null?prop.validade_dias:'')+'"></div><div class="form-group" style="flex:1;min-width:140px"><label class="form-label">Status</label><select id="pr-status" class="form-control">'+['rascunho','pronta','enviada','aceita','expirada'].map(function(s){return '<option'+(prop.status===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div></div>'
+      +'<p class="text-sm text-muted">O editor completo (itens, margem, cláusulas) vem na próxima etapa. Aqui você cria a proposta ligada ao modelo, cliente e contato.</p>'
+      +'</div>');
+    ov.addEventListener('change', function(e){ if(e.target.id==='pr-emp'){ var pe=document.getElementById('pr-pes'); if(pe) pe.innerHTML=pessoaOpts(e.target.value,''); } });
+    ov.addEventListener('click', async function(e){
+      if(e.target===ov){ ov.remove(); return; }
+      var x=e.target.closest('[data-rx]'); if(!x) return; var act=x.getAttribute('data-rx');
+      if(act==='close'){ ov.remove(); return; }
+      if(act==='salvar'){
+        var tplId=document.getElementById('pr-tpl').value||null;
+        var tpl=tpls.filter(function(t){return t.id===tplId;})[0];
+        var tipo=tpl?tpl.tipo:(prop.tipo||'venda');
+        var body={ template_id:tplId, tipo:tipo, empresa_id:document.getElementById('pr-emp').value||null, pessoa_id:document.getElementById('pr-pes').value||null, data:document.getElementById('pr-data').value||null, validade_dias:parseInt(document.getElementById('pr-val').value)||null, status:document.getElementById('pr-status').value||'rascunho' };
+        if(!prop.id && tpl){ var bl={}; ((tpl.config&&tpl.config.blocos)||[]).forEach(function(b){ bl[b.chave]={ligado:!!b.ligado,versao:1}; }); body.blocos=bl; }
+        try{ if(prop.id) await _authFetch('PATCH','/proposta/propostas/'+prop.id,body); else await _authFetch('POST','/proposta/propostas',body); toast('Proposta salva','success'); ov.remove(); carregarPropostas(); }catch(err){ toast('Erro: '+err.message,'error'); }
+      }
+    });
+  }
+  window.abrirPropostaModal=abrirPropostaModal;
+
+  if(!window._propBound){
+    window._propBound=true;
+    document.addEventListener('click', function(e){
+      var pp=e.target.closest && e.target.closest('#prop-produtos-root [data-ppact]');
+      if(pp){ e.preventDefault(); var a=pp.getAttribute('data-ppact'), id=pp.getAttribute('data-id');
+        if(a==='novo'){ abrirProdModal(null); return; }
+        var pr=(window._propProd||[]).filter(function(x){return x.id===id;})[0];
+        if(a==='editar'){ if(pr) abrirProdModal(pr); return; }
+        if(a==='del'){ if(confirm('Excluir produto?')){ _authFetch('DELETE','/proposta/produtos/'+id).then(carregarPropProdutos).catch(function(err){toast(err.message,'error');}); } return; } }
+      var pm=e.target.closest && e.target.closest('#prop-modelos-root [data-pmact]');
+      if(pm){ e.preventDefault(); var a2=pm.getAttribute('data-pmact'), id2=pm.getAttribute('data-id');
+        if(a2==='novo'){ abrirModeloModal(null); return; }
+        var t=(window._propTpl||[]).filter(function(x){return x.id===id2;})[0];
+        if(a2==='config'){ if(t) abrirModeloModal(t); return; } }
+      var prb=e.target.closest && e.target.closest('#propostas-root [data-pract]');
+      if(prb){ e.preventDefault(); var a3=prb.getAttribute('data-pract'), id3=prb.getAttribute('data-id');
+        if(a3==='nova'){ abrirPropostaModal(null); return; }
+        var p=(window._propLista||[]).filter(function(x){return x.id===id3;})[0];
+        if(a3==='editar'){ if(p) abrirPropostaModal(p); return; }
+        if(a3==='del'){ if(confirm('Excluir proposta?')){ _authFetch('DELETE','/proposta/propostas/'+id3).then(carregarPropostas).catch(function(err){toast(err.message,'error');}); } return; } }
     });
   }
 })();
