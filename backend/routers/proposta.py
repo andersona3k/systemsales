@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.proposta import (
     PropConfig, PropTemplate, PropProduto, PropContentBlock,
-    PropProposta, PropGrupo, PropItem, PropPerda,
+    PropProposta, PropGrupo, PropItem, PropPerda, Funil, Oportunidade,
 )
 from ..services.auth_service import get_current_user
 
@@ -324,3 +324,80 @@ def atualizar_proposta(pid: UUID, dados: dict = Body(...), db: Session = Depends
 def deletar_proposta(pid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
     p = db.query(PropProposta).filter(PropProposta.id == pid).first()
     if p: db.delete(p); db.commit()
+
+
+# ---------- Funil / Oportunidades ----------
+def _funil_out(f):
+    return {"id": str(f.id), "nome": f.nome, "etapas": f.etapas or [], "ativo": f.ativo, "ordem": f.ordem or 0}
+
+
+def _op_out(o):
+    return {"id": str(o.id), "funil_id": str(o.funil_id), "etapa": o.etapa, "titulo": o.titulo,
+            "empresa_id": str(o.empresa_id) if o.empresa_id else None,
+            "pessoa_id": str(o.pessoa_id) if o.pessoa_id else None,
+            "vendedor": o.vendedor, "marcadores": o.marcadores or [], "origem": o.origem, "tipo": o.tipo,
+            "sinaleiro": o.sinaleiro or "red", "ordem": o.ordem or 0, "arquivado": o.arquivado,
+            "criado_em": o.criado_em.isoformat() if o.criado_em else None}
+
+
+@router.get("/funis")
+def listar_funis(db: Session = Depends(get_db), _=Depends(get_current_user)):
+    return [_funil_out(f) for f in db.query(Funil).filter(Funil.ativo == True).order_by(Funil.ordem, Funil.nome).all()]
+
+
+@router.post("/funis", status_code=201)
+def criar_funil(dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = Funil(nome=dados.get("nome") or "Novo funil", etapas=dados.get("etapas") or [], ordem=int(dados.get("ordem") or 0))
+    db.add(f); db.commit(); db.refresh(f)
+    return _funil_out(f)
+
+
+@router.patch("/funis/{fid}")
+def atualizar_funil(fid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = db.query(Funil).filter(Funil.id == fid).first()
+    if not f: raise HTTPException(404, "Funil nao encontrado")
+    for k in ("nome", "etapas", "ativo", "ordem"):
+        if k in dados: setattr(f, k, dados[k])
+    db.commit(); db.refresh(f)
+    return _funil_out(f)
+
+
+@router.delete("/funis/{fid}", status_code=204)
+def deletar_funil(fid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    f = db.query(Funil).filter(Funil.id == fid).first()
+    if f: db.delete(f); db.commit()
+
+
+@router.get("/oportunidades")
+def listar_oportunidades(funil_id: str | None = None, incluir_arquivadas: bool = False,
+                         db: Session = Depends(get_db), _=Depends(get_current_user)):
+    q = db.query(Oportunidade)
+    if funil_id: q = q.filter(Oportunidade.funil_id == funil_id)
+    if not incluir_arquivadas: q = q.filter(Oportunidade.arquivado == False)
+    return [_op_out(o) for o in q.order_by(Oportunidade.ordem, Oportunidade.criado_em).all()]
+
+
+@router.post("/oportunidades", status_code=201)
+def criar_oportunidade(dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    o = Oportunidade(funil_id=dados.get("funil_id"), etapa=dados.get("etapa"), titulo=dados.get("titulo"),
+                     empresa_id=dados.get("empresa_id"), pessoa_id=dados.get("pessoa_id"),
+                     vendedor=dados.get("vendedor"), marcadores=dados.get("marcadores") or [],
+                     origem=dados.get("origem"), tipo=dados.get("tipo"), sinaleiro=dados.get("sinaleiro") or "red")
+    db.add(o); db.commit(); db.refresh(o)
+    return _op_out(o)
+
+
+@router.patch("/oportunidades/{oid}")
+def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
+    if not o: raise HTTPException(404, "Oportunidade nao encontrada")
+    for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "sinaleiro", "ordem", "arquivado"):
+        if k in dados: setattr(o, k, dados[k])
+    db.commit(); db.refresh(o)
+    return _op_out(o)
+
+
+@router.delete("/oportunidades/{oid}", status_code=204)
+def deletar_oportunidade(oid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
+    if o: db.delete(o); db.commit()

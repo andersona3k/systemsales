@@ -106,3 +106,32 @@ class PropPerda(Base):
     grupo_id = Column(UUID(as_uuid=True), ForeignKey("prop_grupos.id", ondelete="CASCADE"), nullable=False)
     descricao_item = Column(String(200))
     valor_reposicao = Column(Float, default=0)
+
+
+class Funil(Base):
+    __tablename__ = "com_funis"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nome = Column(String(200), nullable=False)
+    etapas = Column(JSONB, default=list)
+    ativo = Column(Boolean, default=True, server_default=text("true"))
+    ordem = Column(Integer, default=0)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+
+class Oportunidade(Base):
+    __tablename__ = "com_oportunidades"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    funil_id = Column(UUID(as_uuid=True), ForeignKey("com_funis.id", ondelete="CASCADE"), nullable=False)
+    etapa = Column(String(120))
+    titulo = Column(String(200))
+    empresa_id = Column(UUID(as_uuid=True), ForeignKey("prosp_empresas.id"))
+    pessoa_id = Column(UUID(as_uuid=True), ForeignKey("prosp_pessoas.id"))
+    vendedor = Column(String(120))
+    marcadores = Column(JSONB, default=list)
+    origem = Column(String(80))
+    tipo = Column(String(40))
+    sinaleiro = Column(String(10), default="red", server_default=text("'red'"))
+    ordem = Column(Integer, default=0)
+    arquivado = Column(Boolean, default=False, server_default=text("false"))
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
