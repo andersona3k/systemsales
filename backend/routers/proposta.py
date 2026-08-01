@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.proposta import (
     PropConfig, PropTemplate, PropProduto, PropContentBlock,
-    PropProposta, PropGrupo, PropItem, PropPerda, Funil, Oportunidade,
+    PropProposta, PropGrupo, PropItem, PropPerda, Funil, Oportunidade, OpInteracao,
 )
 from ..services.auth_service import get_current_user
 
@@ -329,6 +329,16 @@ def deletar_proposta(pid: UUID, db: Session = Depends(get_db), _=Depends(get_cur
 
 
 # ---------- Funil / Oportunidades ----------
+def _username(u):
+    if isinstance(u, dict): return u.get("username") or u.get("email") or "sistema"
+    return str(u) if u else "sistema"
+
+
+def _int_out(i):
+    return {"id": str(i.id), "tipo": i.tipo, "texto": i.texto, "usuario": i.usuario,
+            "data_hora": i.data_hora.isoformat() if i.data_hora else None}
+
+
 def _funil_out(f):
     return {"id": str(f.id), "nome": f.nome, "etapas": f.etapas or [], "ativo": f.ativo, "ordem": f.ordem or 0}
 
@@ -405,11 +415,12 @@ def criar_oportunidade(dados: dict = Body(...), db: Session = Depends(get_db), _
 
 
 @router.patch("/oportunidades/{oid}")
-def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
     o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
     if not o: raise HTTPException(404, "Oportunidade nao encontrada")
     if "etapa" in dados and dados["etapa"] and dados["etapa"] != o.etapa:
         o.data_entrada_etapa = datetime.utcnow()
+        db.add(OpInteracao(oportunidade_id=o.id, tipo="sistema", texto='Movido para etapa "' + str(dados["etapa"]) + '"', usuario=_username(user)))
     if "data_tarefa" in dados:
         o.data_tarefa = date.fromisoformat(dados["data_tarefa"]) if dados.get("data_tarefa") else None
     for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "farol", "sinaleiro", "ordem", "arquivado"):
@@ -422,3 +433,21 @@ def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Dep
 def deletar_oportunidade(oid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
     o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
     if o: db.delete(o); db.commit()
+
+
+@router.get("/oportunidades/{oid}")
+def obter_oportunidade(oid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
+    if not o: raise HTTPException(404, "Oportunidade nao encontrada")
+    ints = db.query(OpInteracao).filter(OpInteracao.oportunidade_id == oid).order_by(OpInteracao.data_hora.desc()).all()
+    d = _op_out(o); d["interacoes"] = [_int_out(x) for x in ints]
+    return d
+
+
+@router.post("/oportunidades/{oid}/interacoes", status_code=201)
+def add_interacao(oid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
+    o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
+    if not o: raise HTTPException(404, "Oportunidade nao encontrada")
+    i = OpInteracao(oportunidade_id=oid, tipo=dados.get("tipo") or "nota", texto=dados.get("texto"), usuario=_username(user))
+    db.add(i); db.commit(); db.refresh(i)
+    return _int_out(i)

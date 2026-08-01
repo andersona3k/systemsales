@@ -139,3 +139,13 @@ class Oportunidade(Base):
     arquivado = Column(Boolean, default=False, server_default=text("false"))
     criado_em = Column(DateTime, default=datetime.utcnow)
     atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class OpInteracao(Base):
+    __tablename__ = "com_op_interacoes"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    oportunidade_id = Column(UUID(as_uuid=True), ForeignKey("com_oportunidades.id", ondelete="CASCADE"), nullable=False)
+    tipo = Column(String(20))  # email|inmail|whatsapp|telefone|reuniao|linkedin|nota|sistema
+    texto = Column(Text)
+    usuario = Column(String(120))
+    data_hora = Column(DateTime, default=datetime.utcnow)
