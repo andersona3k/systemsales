@@ -8444,7 +8444,8 @@ window.abrirBebidaModal=function(beb, mode){
   document.head.appendChild(st);
 
   var TIPOS_INT=[['email','E-mail','#2563eb'],['inmail','In-Mail','#7c3aed'],['whatsapp','WhatsApp','#16a34a'],['telefone','Telefone','#0891b2'],['reuniao','Reunião','#f59e0b'],['linkedin','LinkedIn','#0a66c2'],['nota','Nota','#6b7280']];
-  var INT_TABS=[['nota','Nota'],['email','E-mail'],['whatsapp','WhatsApp'],['telefone','Telefone'],['reuniao','Reunião']];
+  var INT_TABS=[['nota','Nota','📝'],['email','E-mail','✉️'],['whatsapp','WhatsApp','💬'],['telefone','Telefone','📞'],['reuniao','Reunião','🤝']];
+  var TIPO_ICON={nota:'📝',email:'✉️',whatsapp:'💬',telefone:'📞',reuniao:'🤝',inmail:'📨',linkedin:'in',sistema:'↪'};
   var MENU1=[['historico','Histórico'],['propostas','Propostas'],['vendas','Vendas'],['pre-venda','Pré Venda'],['anexos','Anexos']];
   var PRE_TABS=[['material','Material'],['engenharia','Engenharia'],['documentos','Documentos'],['tickets','Tickets'],['linha-tempo','Linha do tempo']];
   function tcol(t){ var x=TIPOS_INT.filter(function(z){return z[0]===t;})[0]; return x?x[2]:'#6d28d9'; }
@@ -8530,16 +8531,22 @@ window.abrirBebidaModal=function(beb, mode){
   function interacaoPanel(d){
     var ints=d.interacoes||[];
     var tipoSel=window._opIntTipo||'nota';
-    var tabs=INT_TABS.map(function(t){ var col=tcol(t[0]); return '<button class="op-int-tab" data-tipo="'+t[0]+'" style="border:none;background:none;cursor:pointer;padding:6px 9px;font-size:13px;font-weight:600;border-bottom:2px solid '+(tipoSel===t[0]?col:'transparent')+';color:'+(tipoSel===t[0]?col:'var(--text-muted)')+'">'+t[1]+'</button>'; }).join('');
+    var tabs=INT_TABS.map(function(t){ var on=(tipoSel===t[0]); return '<button class="op-int-tab" data-tipo="'+t[0]+'" title="'+t[1]+'" style="border:none;cursor:pointer;padding:5px 11px;font-size:13px;font-weight:600;border-radius:8px;background:'+(on?'#6d28d9':'#ede9fe')+';color:'+(on?'#fff':'#6d28d9')+'">'+t[2]+' '+t[1]+'</button>'; }).join('');
     var cont={}; ints.forEach(function(i){ cont[i.tipo]=(cont[i.tipo]||0)+1; });
     var counters=INT_TABS.filter(function(t){return t[0]!=='nota';}).map(function(t){ return '<span class="prop-chip">'+t[1]+': '+(cont[t[0]]||0)+'</span>'; }).join('');
     var timeline=ints.map(function(i){
       var an=(i.anexos||[]).map(function(u){ return '<a href="'+u+'" target="_blank" style="font-size:12px;color:var(--primary);margin-right:8px">📎 '+esc((''+u).split('/').pop())+'</a>'; }).join('');
-      if(i.tipo==='sistema'){ return '<div style="display:flex;gap:8px;padding:7px 0;color:var(--text-muted);font-size:13px"><span>↪</span><div>'+esc(i.texto||'')+'<div style="font-size:11px">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>'; }
+      if(i.tipo==='sistema'){
+        var mm=(''+(i.texto||'')).match(/de "([^"]*)" para "([^"]*)"/);
+        if(mm){ var et=window._detEtapas||[]; var fi=et.indexOf(mm[1]), ti=et.indexOf(mm[2]); var fwd=(ti>=fi); var bc=fwd?'#16a34a':'#dc2626'; var arr=fwd?'→':'←';
+          return '<div style="display:flex;justify-content:center;padding:10px 0"><div style="border:2px solid '+bc+';border-radius:10px;padding:8px 14px;text-align:center;max-width:360px"><div style="font-size:13px;font-weight:600">'+esc(mm[1])+' <span style="color:'+bc+';font-size:17px;vertical-align:middle">'+arr+'</span> '+esc(mm[2])+'</div><div style="font-size:11px;color:var(--text-muted)">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>'; }
+        return '<div style="display:flex;gap:8px;padding:7px 0;color:var(--text-muted);font-size:13px"><span>↪</span><div>'+esc(i.texto||'')+'<div style="font-size:11px">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>';
+      }
       var t=TIPOS_INT.filter(function(x){return x[0]===i.tipo;})[0]||['nota','Nota','#6b7280'];
-      return '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border,#eee)"><span style="background:'+t[2]+';color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap;align-self:flex-start">'+t[1]+'</span><div style="flex:1"><div style="font-size:14px;white-space:pre-wrap">'+esc(i.texto||'')+'</div>'+(an?'<div style="margin-top:3px">'+an+'</div>':'')+'<div style="font-size:11px;color:var(--text-muted)">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>';
+      var ic=TIPO_ICON[i.tipo]||'•';
+      return '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border,#eee)"><span style="background:'+t[2]+';color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap;align-self:flex-start">'+ic+' '+t[1]+'</span><div style="flex:1"><div style="font-size:14px;white-space:pre-wrap">'+esc(i.texto||'')+'</div>'+(an?'<div style="margin-top:3px">'+an+'</div>':'')+'<div style="font-size:11px;color:var(--text-muted)">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>';
     }).join('')||'<p class="text-sm text-muted">Nenhuma interação ainda.</p>';
-    return '<div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:8px">'+tabs+'</div>'
+    return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+tabs+'</div>'
       +'<textarea id="op-int-txt" class="form-control" rows="3" placeholder="Registrar interação, gancho, retorno da conversa..."></textarea>'
       +'<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><button class="btn btn-primary btn-sm" data-fnact="registrar" data-id="'+d.id+'">Registrar</button><label style="font-size:12px;color:var(--text-muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px">📎 Anexar<input type="file" id="op-int-file" style="display:none"></label><span id="op-int-fname" class="text-sm text-muted"></span></div>'
       +(counters?'<div style="margin:12px 0 6px;display:flex;gap:6px;flex-wrap:wrap">'+counters+'</div>':'')
@@ -8555,7 +8562,7 @@ window.abrirBebidaModal=function(beb, mode){
     var d=window._opDet; if(!d) return;
     var root=document.getElementById('funil-root'); if(!root) return;
     var funil=(window._funis||[]).filter(function(x){return x.id===d.funil_id;})[0]||window._funilAtivo||{etapas:[]};
-    var etapas=funil.etapas||[]; var curIdx=etapas.indexOf(d.etapa);
+    var etapas=funil.etapas||[]; var curIdx=etapas.indexOf(d.etapa); window._detEtapas=etapas;
     var emp=(window._propEmpObj||{})[d.empresa_id]||{}; var pes=(window._propPesObj||{})[d.pessoa_id]||{};
     var num=d.numero?('#'+String(d.numero).padStart(3,'0')):'';
     var stepper=etapas.map(function(et,i){
@@ -8564,12 +8571,12 @@ window.abrirBebidaModal=function(beb, mode){
       return '<button class="op-step" data-stage="'+esc(et)+'" style="flex:1;min-width:100px;border:none;cursor:pointer;background:'+bg+';color:'+col+';padding:9px 6px;font-size:12px;font-weight:600;border-radius:6px">'+esc(et)+'</button>';
     }).join('');
     var tab=window._opTab||'historico';
-    var m1=MENU1.map(function(t){ return '<button class="op-m1" data-m1="'+t[0]+'" style="border:none;background:none;cursor:pointer;padding:8px 12px;font-size:14px;font-weight:600;border-bottom:2px solid '+(tab===t[0]?'#6d28d9':'transparent')+';color:'+(tab===t[0]?'#6d28d9':'var(--text-muted)')+'">'+t[1]+'</button>'; }).join('');
+    var m1=MENU1.map(function(t){ var on=(tab===t[0]); return '<button class="op-m1" data-m1="'+t[0]+'" style="border:none;cursor:pointer;padding:7px 14px;font-size:13px;font-weight:600;border-radius:8px;background:'+(on?'#6d28d9':'#ede9fe')+';color:'+(on?'#fff':'#6d28d9')+'">'+t[1]+'</button>'; }).join('');
     var content;
     if(tab==='historico') content='<div style="margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#6d28d9;border-bottom:2px solid #6d28d9;padding:0 6px 6px">Interação</span></div>'+interacaoPanel(d);
     else if(tab==='pre-venda') content=preVendaPanel();
     else content='<p class="text-sm text-muted" style="padding:16px 4px">'+(MENU1.filter(function(x){return x[0]===tab;})[0]||['','?'])[1]+' — em construção.</p>';
-    var right='<div class="prop-card"><div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:10px">'+m1+'</div>'+content+'</div>';
+    var right='<div class="prop-card"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+m1+'</div>'+content+'</div>';
     root.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-sm btn-secondary" data-fnact="voltar">← Voltar ao funil</button><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" data-fnact="editar-det" data-id="'+d.id+'">✏️ Editar</button><button class="btn btn-sm btn-secondary" data-fnact="arquivar" data-id="'+d.id+'">📦 Arquivar</button></div></div>'
       +'<div style="font-size:18px;font-weight:700;margin-bottom:2px">'+esc(d.titulo||'(sem título)')+(num?' <span class="text-sm text-muted">'+num+'</span>':'')+'</div>'

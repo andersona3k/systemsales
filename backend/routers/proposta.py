@@ -423,7 +423,7 @@ def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Dep
     if not o: raise HTTPException(404, "Oportunidade nao encontrada")
     if "etapa" in dados and dados["etapa"] and dados["etapa"] != o.etapa:
         o.data_entrada_etapa = datetime.utcnow()
-        db.add(OpInteracao(oportunidade_id=o.id, tipo="sistema", texto='Movido para etapa "' + str(dados["etapa"]) + '"', usuario=_username(user)))
+        db.add(OpInteracao(oportunidade_id=o.id, tipo="sistema", texto='Movido de "' + str(o.etapa or "") + '" para "' + str(dados["etapa"]) + '"', usuario=_username(user)))
     if "data_tarefa" in dados:
         o.data_tarefa = date.fromisoformat(dados["data_tarefa"]) if dados.get("data_tarefa") else None
     for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "farol", "sinaleiro", "ordem", "arquivado"):
