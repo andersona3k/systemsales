@@ -8439,12 +8439,15 @@ window.abrirBebidaModal=function(beb, mode){
   st.textContent='#page-funil .page-content{max-width:none;margin:0;padding:12px 16px}'
     +'.fn-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}'
     +'.fn-col{flex:0 0 250px;background:var(--surface-2,#f3f4f6);border-radius:12px;padding:8px;min-height:60px}'
-    +'.fn-col.drop{outline:2px dashed #6d28d9}'
     +'.fn-col-h{font-weight:700;font-size:13px;padding:4px 6px 8px;display:flex;justify-content:space-between;align-items:center}'
     +'.fn-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:8px 10px;margin-bottom:8px}';
   document.head.appendChild(st);
 
   var TIPOS_INT=[['email','E-mail','#2563eb'],['inmail','In-Mail','#7c3aed'],['whatsapp','WhatsApp','#16a34a'],['telefone','Telefone','#0891b2'],['reuniao','Reunião','#f59e0b'],['linkedin','LinkedIn','#0a66c2'],['nota','Nota','#6b7280']];
+  var INT_TABS=[['nota','Nota'],['email','E-mail'],['whatsapp','WhatsApp'],['telefone','Telefone'],['reuniao','Reunião']];
+  var MENU1=[['historico','Histórico'],['propostas','Propostas'],['vendas','Vendas'],['pre-venda','Pré Venda'],['anexos','Anexos']];
+  var PRE_TABS=[['material','Material'],['engenharia','Engenharia'],['documentos','Documentos'],['tickets','Tickets'],['linha-tempo','Linha do tempo']];
+  function tcol(t){ var x=TIPOS_INT.filter(function(z){return z[0]===t;})[0]; return x?x[2]:'#6d28d9'; }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function ovOpen(html){ var ov=document.createElement('div'); ov.className='prop-ov'; ov.innerHTML='<div class="prop-mod">'+html+'</div>'; document.body.appendChild(ov); return ov; }
   function v(id){ var el=document.getElementById(id); return el?el.value:''; }
@@ -8512,7 +8515,7 @@ window.abrirBebidaModal=function(beb, mode){
   }
   window.carregarFunil=carregarFunil;
 
-  /* ---------- DETALHE (página inteira dentro do funil) ---------- */
+  /* ---------- DETALHE ---------- */
   function clienteCol(d,emp,pes){
     function row(l,val){ return '<div style="padding:5px 0;border-bottom:1px solid var(--border,#eee)"><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">'+l+'</div><div style="font-size:14px">'+(val||'—')+'</div></div>'; }
     var farolLbl={quente:'Quente',morno:'Morno',frio:'Frio'}[d.farol||'frio'];
@@ -8523,6 +8526,30 @@ window.abrirBebidaModal=function(beb, mode){
       +row('Farol',farolLbl)+row('Próxima tarefa',fmtD(d.data_tarefa))+row('Dias na etapa',(d.dias_etapa!=null?d.dias_etapa+' dias':'—'))
       +((d.marcadores&&d.marcadores.length)?'<div style="padding:6px 0">'+d.marcadores.map(function(m){return '<span class="fn-tag">'+esc(m)+'</span>';}).join('')+'</div>':'')
     +'</div>';
+  }
+  function interacaoPanel(d){
+    var ints=d.interacoes||[];
+    var tipoSel=window._opIntTipo||'nota';
+    var tabs=INT_TABS.map(function(t){ var col=tcol(t[0]); return '<button class="op-int-tab" data-tipo="'+t[0]+'" style="border:none;background:none;cursor:pointer;padding:6px 9px;font-size:13px;font-weight:600;border-bottom:2px solid '+(tipoSel===t[0]?col:'transparent')+';color:'+(tipoSel===t[0]?col:'var(--text-muted)')+'">'+t[1]+'</button>'; }).join('');
+    var cont={}; ints.forEach(function(i){ cont[i.tipo]=(cont[i.tipo]||0)+1; });
+    var counters=INT_TABS.filter(function(t){return t[0]!=='nota';}).map(function(t){ return '<span class="prop-chip">'+t[1]+': '+(cont[t[0]]||0)+'</span>'; }).join('');
+    var timeline=ints.map(function(i){
+      var an=(i.anexos||[]).map(function(u){ return '<a href="'+u+'" target="_blank" style="font-size:12px;color:var(--primary);margin-right:8px">📎 '+esc((''+u).split('/').pop())+'</a>'; }).join('');
+      if(i.tipo==='sistema'){ return '<div style="display:flex;gap:8px;padding:7px 0;color:var(--text-muted);font-size:13px"><span>↪</span><div>'+esc(i.texto||'')+'<div style="font-size:11px">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>'; }
+      var t=TIPOS_INT.filter(function(x){return x[0]===i.tipo;})[0]||['nota','Nota','#6b7280'];
+      return '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border,#eee)"><span style="background:'+t[2]+';color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap;align-self:flex-start">'+t[1]+'</span><div style="flex:1"><div style="font-size:14px;white-space:pre-wrap">'+esc(i.texto||'')+'</div>'+(an?'<div style="margin-top:3px">'+an+'</div>':'')+'<div style="font-size:11px;color:var(--text-muted)">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>';
+    }).join('')||'<p class="text-sm text-muted">Nenhuma interação ainda.</p>';
+    return '<div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:8px">'+tabs+'</div>'
+      +'<textarea id="op-int-txt" class="form-control" rows="3" placeholder="Registrar interação, gancho, retorno da conversa..."></textarea>'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><button class="btn btn-primary btn-sm" data-fnact="registrar" data-id="'+d.id+'">Registrar</button><label style="font-size:12px;color:var(--text-muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px">📎 Anexar<input type="file" id="op-int-file" style="display:none"></label><span id="op-int-fname" class="text-sm text-muted"></span></div>'
+      +(counters?'<div style="margin:12px 0 6px;display:flex;gap:6px;flex-wrap:wrap">'+counters+'</div>':'')
+      +'<div style="margin-top:6px">'+timeline+'</div>';
+  }
+  function preVendaPanel(){
+    var stt=window._opPreTab||'material';
+    var m2=PRE_TABS.map(function(t){ return '<button class="op-m2" data-m2="'+t[0]+'" style="border:none;background:none;cursor:pointer;padding:6px 10px;font-size:13px;font-weight:600;border-bottom:2px solid '+(stt===t[0]?'#6d28d9':'transparent')+';color:'+(stt===t[0]?'#6d28d9':'var(--text-muted)')+'">'+t[1]+'</button>'; }).join('');
+    var lbl=(PRE_TABS.filter(function(x){return x[0]===stt;})[0]||['','?'])[1];
+    return '<div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:10px">'+m2+'</div><p class="text-sm text-muted" style="padding:16px 4px">Pré Venda › '+esc(lbl)+' — em construção.</p>';
   }
   function renderDetalhe(){
     var d=window._opDet; if(!d) return;
@@ -8536,31 +8563,19 @@ window.abrirBebidaModal=function(beb, mode){
       var bg=cur?'#6d28d9':(done?'#a78bfa':'var(--surface-2,#eef1f5)'); var col=(cur||done)?'#fff':'var(--text-muted,#6b7280)';
       return '<button class="op-step" data-stage="'+esc(et)+'" style="flex:1;min-width:100px;border:none;cursor:pointer;background:'+bg+';color:'+col+';padding:9px 6px;font-size:12px;font-weight:600;border-radius:6px">'+esc(et)+'</button>';
     }).join('');
-    var tipoSel=window._opIntTipo||'nota';
-    var tabs=TIPOS_INT.map(function(t){ return '<button class="op-int-tab" data-tipo="'+t[0]+'" style="border:none;background:none;cursor:pointer;padding:6px 9px;font-size:13px;font-weight:600;border-bottom:2px solid '+(tipoSel===t[0]?t[2]:'transparent')+';color:'+(tipoSel===t[0]?t[2]:'var(--text-muted)')+'">'+t[1]+'</button>'; }).join('');
-    var ints=d.interacoes||[];
-    var cont={}; TIPOS_INT.forEach(function(t){cont[t[0]]=0;}); ints.forEach(function(i){ if(cont[i.tipo]!=null) cont[i.tipo]++; });
-    var counters=TIPOS_INT.filter(function(t){return t[0]!=='nota';}).map(function(t){ return '<span class="prop-chip">'+t[1]+': '+(cont[t[0]]||0)+'</span>'; }).join('');
-    var timeline=ints.map(function(i){
-      if(i.tipo==='sistema'){ return '<div style="display:flex;gap:8px;padding:7px 0;color:var(--text-muted);font-size:13px"><span>↪</span><div>'+esc(i.texto||'')+'<div style="font-size:11px">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>'; }
-      var t=TIPOS_INT.filter(function(x){return x[0]===i.tipo;})[0]||['nota','Nota','#6b7280'];
-      return '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border,#eee)"><span style="background:'+t[2]+';color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap;align-self:flex-start">'+t[1]+'</span><div style="flex:1"><div style="font-size:14px;white-space:pre-wrap">'+esc(i.texto||'')+'</div><div style="font-size:11px;color:var(--text-muted)">'+fmtDT(i.data_hora)+(i.usuario?' · '+esc(i.usuario):'')+'</div></div></div>';
-    }).join('')||'<p class="text-sm text-muted">Nenhuma interação ainda.</p>';
+    var tab=window._opTab||'historico';
+    var m1=MENU1.map(function(t){ return '<button class="op-m1" data-m1="'+t[0]+'" style="border:none;background:none;cursor:pointer;padding:8px 12px;font-size:14px;font-weight:600;border-bottom:2px solid '+(tab===t[0]?'#6d28d9':'transparent')+';color:'+(tab===t[0]?'#6d28d9':'var(--text-muted)')+'">'+t[1]+'</button>'; }).join('');
+    var content;
+    if(tab==='historico') content='<div style="margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#6d28d9;border-bottom:2px solid #6d28d9;padding:0 6px 6px">Interação</span></div>'+interacaoPanel(d);
+    else if(tab==='pre-venda') content=preVendaPanel();
+    else content='<p class="text-sm text-muted" style="padding:16px 4px">'+(MENU1.filter(function(x){return x[0]===tab;})[0]||['','?'])[1]+' — em construção.</p>';
+    var right='<div class="prop-card"><div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:10px">'+m1+'</div>'+content+'</div>';
     root.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-sm btn-secondary" data-fnact="voltar">← Voltar ao funil</button><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" data-fnact="editar-det" data-id="'+d.id+'">✏️ Editar</button><button class="btn btn-sm btn-secondary" data-fnact="arquivar" data-id="'+d.id+'">📦 Arquivar</button></div></div>'
       +'<div style="font-size:18px;font-weight:700;margin-bottom:2px">'+esc(d.titulo||'(sem título)')+(num?' <span class="text-sm text-muted">'+num+'</span>':'')+'</div>'
       +'<div class="text-sm text-muted" style="margin-bottom:10px">'+esc(emp.nome||'')+(d.vendedor?' · '+esc(d.vendedor):'')+'</div>'
       +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px">'+stepper+'</div>'
-      +'<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">'
-        +'<div style="flex:0 0 260px;min-width:240px">'+clienteCol(d,emp,pes)+'</div>'
-        +'<div style="flex:1;min-width:300px"><div class="prop-card">'
-          +'<div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:8px">'+tabs+'</div>'
-          +'<textarea id="op-int-txt" class="form-control" rows="3" placeholder="Registrar interação, gancho, retorno da conversa..."></textarea>'
-          +'<div style="margin-top:8px"><button class="btn btn-primary btn-sm" data-fnact="registrar" data-id="'+d.id+'">Registrar</button></div>'
-          +(counters?'<div style="margin:12px 0 6px;display:flex;gap:6px;flex-wrap:wrap">'+counters+'</div>':'')
-          +'<div style="margin-top:6px">'+timeline+'</div>'
-        +'</div></div>'
-      +'</div>';
+      +'<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start"><div style="flex:0 0 260px;min-width:240px">'+clienteCol(d,emp,pes)+'</div><div style="flex:1;min-width:320px">'+right+'</div></div>';
   }
   async function abrirOpDetalhe(id){
     var root=document.getElementById('funil-root'); if(!root) return;
@@ -8572,7 +8587,7 @@ window.abrirBebidaModal=function(beb, mode){
   }
   window.abrirOpDetalhe=abrirOpDetalhe;
 
-  /* ---------- MODAL (criar/editar) ---------- */
+  /* ---------- MODAL ---------- */
   async function abrirOpModal(op){
     await ensureMaps();
     var oc=await opConfig();
@@ -8642,6 +8657,7 @@ window.abrirBebidaModal=function(beb, mode){
     document.addEventListener('drop', function(e){ var col=e.target.closest&&e.target.closest('.fn-col[data-etapa]'); if(col&&window._dragOpId){ e.preventDefault(); var et=col.getAttribute('data-etapa'); _authFetch('PATCH','/proposta/oportunidades/'+window._dragOpId,{etapa:et}).then(carregarFunil).catch(function(err){toast(err.message,'error');}); window._dragOpId=null; } });
     document.addEventListener('change', function(e){
       if(e.target && e.target.id==='fn-sel'){ window._funilSel=e.target.value; carregarFunil(); return; }
+      if(e.target && e.target.id==='op-int-file'){ var fn=document.getElementById('op-int-fname'); if(fn) fn.textContent=(e.target.files&&e.target.files[0])?e.target.files[0].name:''; return; }
     });
     document.addEventListener('click', function(e){
       var oc=e.target.closest && e.target.closest('#prop-config-root [data-opcfg]');
@@ -8655,6 +8671,10 @@ window.abrirBebidaModal=function(beb, mode){
         if(fa==='ren-funil'){ var inp=document.querySelector('.fcfg-nome[data-fid="'+fid+'"]'); if(inp){ _authFetch('PATCH','/proposta/funis/'+fid,{nome:inp.value}).then(renderFunilCfg); } return; }
         if(fa==='add-etapa'){ var ei=document.querySelector('.fcfg-etapa-inp[data-fid="'+fid+'"]'); var ev=(ei&&ei.value||'').trim(); if(!ev) return; var f2=funById(fid); var et=(f2&&f2.etapas||[]).slice(); if(et.indexOf(ev)<0) et.push(ev); _authFetch('PATCH','/proposta/funis/'+fid,{etapas:et}).then(renderFunilCfg); return; }
         if(fa==='del-etapa'){ var dv=fc.getAttribute('data-v'); var f3=funById(fid); var et2=(f3&&f3.etapas||[]).filter(function(x){return x!==dv;}); _authFetch('PATCH','/proposta/funis/'+fid,{etapas:et2}).then(renderFunilCfg); return; } }
+      var m1b=e.target.closest && e.target.closest('#funil-root .op-m1');
+      if(m1b){ e.preventDefault(); window._opTab=m1b.getAttribute('data-m1'); renderDetalhe(); return; }
+      var m2b=e.target.closest && e.target.closest('#funil-root .op-m2');
+      if(m2b){ e.preventDefault(); window._opPreTab=m2b.getAttribute('data-m2'); renderDetalhe(); return; }
       var stg=e.target.closest && e.target.closest('#funil-root [data-stage]');
       if(stg){ e.preventDefault(); var etp=stg.getAttribute('data-stage'); var dd=window._opDet; if(dd&&etp!==dd.etapa){ _authFetch('PATCH','/proposta/oportunidades/'+dd.id,{etapa:etp}).then(function(){ abrirOpDetalhe(dd.id); }).catch(function(err){toast(err.message,'error');}); } return; }
       var tab=e.target.closest && e.target.closest('#funil-root .op-int-tab');
@@ -8662,11 +8682,11 @@ window.abrirBebidaModal=function(beb, mode){
       var fb=e.target.closest && e.target.closest('#funil-root [data-fnact]');
       if(fb){ e.preventDefault(); var a=fb.getAttribute('data-fnact'), id=fb.getAttribute('data-id');
         if(a==='nova'){ abrirOpModal(null); return; }
-        if(a==='detalhe'){ abrirOpDetalhe(id); return; }
+        if(a==='detalhe'){ window._opTab='historico'; abrirOpDetalhe(id); return; }
         if(a==='voltar'){ carregarFunil(); return; }
         if(a==='editar-det'){ abrirOpModal(window._opDet); return; }
         if(a==='arquivar'){ if(confirm('Arquivar esta oportunidade?')){ _authFetch('PATCH','/proposta/oportunidades/'+id,{arquivado:true}).then(function(){ carregarFunil(); }).catch(function(err){toast(err.message,'error');}); } return; }
-        if(a==='registrar'){ var t=document.getElementById('op-int-txt'); var txt=(t&&t.value||'').trim(); if(!txt){ toast('Escreva a interação','error'); return; } _authFetch('POST','/proposta/oportunidades/'+id+'/interacoes',{tipo:window._opIntTipo||'nota',texto:txt}).then(function(){ abrirOpDetalhe(id); }).catch(function(err){toast(err.message,'error');}); return; } }
+        if(a==='registrar'){ var t=document.getElementById('op-int-txt'); var txt=(t&&t.value||'').trim(); var fi=document.getElementById('op-int-file'); var file=(fi&&fi.files&&fi.files[0])||null; if(!txt && !file){ toast('Escreva a interação ou anexe um arquivo','error'); return; } var fd=new FormData(); fd.append('tipo', window._opIntTipo||'nota'); fd.append('texto', txt); if(file) fd.append('arquivo', file); fetch('/api/proposta/oportunidades/'+id+'/interacoes',{method:'POST',headers:{'Authorization':'Bearer '+getToken()},body:fd}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(){ abrirOpDetalhe(id); }).catch(function(){ toast('Erro ao registrar','error'); }); return; } }
     });
   }
 })();
