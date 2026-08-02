@@ -2,7 +2,7 @@ import io
 from uuid import UUID
 from datetime import datetime, date
 from sqlalchemy import func
-from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File, Form
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -11,8 +11,11 @@ from ..models.proposta import (
     PropProposta, PropGrupo, PropItem, PropPerda, Funil, Oportunidade, OpInteracao,
 )
 from ..services.auth_service import get_current_user
+from ..config import get_settings
+from ..services.img_service import salvar_imagem
 
 router = APIRouter(prefix="/api/proposta", tags=["Proposta"])
+settings = get_settings()
 
 
 # ---------- serialização ----------
@@ -336,7 +339,7 @@ def _username(u):
 
 def _int_out(i):
     return {"id": str(i.id), "tipo": i.tipo, "texto": i.texto, "usuario": i.usuario,
-            "data_hora": i.data_hora.isoformat() if i.data_hora else None}
+            "anexos": i.anexos or [], "data_hora": i.data_hora.isoformat() if i.data_hora else None}
 
 
 def _funil_out(f):
@@ -445,9 +448,16 @@ def obter_oportunidade(oid: UUID, db: Session = Depends(get_db), _=Depends(get_c
 
 
 @router.post("/oportunidades/{oid}/interacoes", status_code=201)
-def add_interacao(oid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
+def add_interacao(oid: UUID, tipo: str = Form("nota"), texto: str = Form(""), arquivo: UploadFile = File(None),
+                  db: Session = Depends(get_db), user=Depends(get_current_user)):
     o = db.query(Oportunidade).filter(Oportunidade.id == oid).first()
     if not o: raise HTTPException(404, "Oportunidade nao encontrada")
-    i = OpInteracao(oportunidade_id=oid, tipo=dados.get("tipo") or "nota", texto=dados.get("texto"), usuario=_username(user))
+    anexos = []
+    if arquivo is not None:
+        try:
+            anexos = [salvar_imagem(arquivo, settings.upload_dir, "opint")]
+        except Exception:
+            anexos = []
+    i = OpInteracao(oportunidade_id=oid, tipo=tipo or "nota", texto=texto, usuario=_username(user), anexos=anexos)
     db.add(i); db.commit(); db.refresh(i)
     return _int_out(i)

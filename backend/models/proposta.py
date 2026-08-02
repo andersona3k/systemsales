@@ -148,4 +148,5 @@ class OpInteracao(Base):
     tipo = Column(String(20))  # email|inmail|whatsapp|telefone|reuniao|linkedin|nota|sistema
     texto = Column(Text)
     usuario = Column(String(120))
+    anexos = Column(JSONB, default=list)
     data_hora = Column(DateTime, default=datetime.utcnow)
