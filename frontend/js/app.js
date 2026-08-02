@@ -8470,9 +8470,10 @@ window.abrirBebidaModal=function(beb, mode){
 
   /* ---------- BOARD ---------- */
   function taskIcon(o){
-    if(!o.data_tarefa) return '<span title="Sem tarefa programada" style="color:#cbd5e1">📅</span>';
-    if(o.data_tarefa < hojeISO()) return '<span title="Tarefa vencida: '+o.data_tarefa+'" style="color:#dc2626">📅</span>';
-    return '<span title="Tarefa programada: '+o.data_tarefa+'" style="color:#2563eb">📅</span>';
+    var st=o.tarefa_status||'sem';
+    var c={atrasada:'#dc2626',hoje:'#f59e0b',planejada:'#2563eb',sem:'#9ca3af'}[st]||'#9ca3af';
+    var tt={atrasada:'Tarefa atrasada',hoje:'Tarefa vence hoje',planejada:'Tarefa planejada',sem:'Sem tarefa planejada'}[st]||'Sem tarefa';
+    return '<span title="'+tt+'" style="display:inline-flex;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>';
   }
   function farolTag(f){
     var m={quente:['Quente','#16a34a'],morno:['Morno','#f59e0b'],frio:['Frio','#2563eb']};
@@ -8495,10 +8496,11 @@ window.abrirBebidaModal=function(beb, mode){
     var fc=o.forecast||{}; var rev=parseFloat(fc.revenda_hw)||0, serv=parseFloat(fc.servicos)||0, saas=parseFloat(fc.saas_haas)||0;
     var resumo='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--border,#eee)"><span style="font-weight:700;font-size:12px">'+money(rev+serv)+'</span><span style="font-weight:700;font-size:12px;color:#2563eb">'+money(saas)+'/mês</span></div>';
     return '<div class="fn-card" draggable="true" data-opid="'+o.id+'" data-fnact="detalhe" data-id="'+o.id+'" style="cursor:pointer">'
-      +'<div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start"><b style="font-size:13px;line-height:1.2">'+esc(o.titulo||'(sem título)')+(num?' <span class="text-sm text-muted">'+num+'</span>':'')+'</b>'+taskIcon(o)+'</div>'
+      +'<div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start"><span style="font-size:13px;line-height:1.25">'+esc(o.titulo||'(sem título)')+'</span>'+taskIcon(o)+'</div>'
       +(emp?'<div class="text-sm text-muted" style="margin:2px 0">'+esc(emp)+'</div>':'')
       +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px">'+avatar(o.vendedor)+farolDot(o.farol)+'<span style="margin-left:auto;font-size:11px;color:#6b7280">'+dias+'</span></div>'
       +resumo
+      +(num?'<div style="text-align:right;font-size:10px;color:#9ca3af;margin-top:2px">'+num+'</div>':'')
     +'</div>';
   }
   async function carregarFunil(){

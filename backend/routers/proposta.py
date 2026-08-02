@@ -400,7 +400,24 @@ def listar_oportunidades(funil_id: str | None = None, incluir_arquivadas: bool =
     q = db.query(Oportunidade)
     if funil_id: q = q.filter(Oportunidade.funil_id == funil_id)
     if not incluir_arquivadas: q = q.filter(Oportunidade.arquivado == False)
-    return [_op_out(o) for o in q.order_by(Oportunidade.ordem, Oportunidade.criado_em).all()]
+    ops = q.order_by(Oportunidade.ordem, Oportunidade.criado_em).all()
+    out = [_op_out(o) for o in ops]
+    ids = [o.id for o in ops]
+    if ids:
+        hoje = (datetime.utcnow() - timedelta(hours=3)).date()
+        rank = {"atrasada": 3, "hoje": 2, "planejada": 1}
+        sm = {}
+        for oid, dt in db.query(Tarefa.oportunidade_id, Tarefa.data).filter(
+                Tarefa.oportunidade_id.in_(ids), Tarefa.status == "aberta", Tarefa.data.isnot(None)).all():
+            st = "atrasada" if dt < hoje else ("hoje" if dt == hoje else "planejada")
+            if oid not in sm or rank[st] > rank[sm[oid]]:
+                sm[oid] = st
+        for o, d in zip(ops, out):
+            d["tarefa_status"] = sm.get(o.id, "sem")
+    else:
+        for d in out:
+            d["tarefa_status"] = "sem"
+    return out
 
 
 @router.post("/oportunidades", status_code=201)
