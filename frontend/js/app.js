@@ -8558,6 +8558,45 @@ window.abrirBebidaModal=function(beb, mode){
     var lbl=(PRE_TABS.filter(function(x){return x[0]===stt;})[0]||['','?'])[1];
     return '<div style="display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border,#eee);margin-bottom:10px">'+m2+'</div><p class="text-sm text-muted" style="padding:16px 4px">Pré Venda › '+esc(lbl)+' — em construção.</p>';
   }
+  function tarefasPanel(d){
+    var ts=d.tarefas||[];
+    var rows=ts.map(function(t){
+      var done=(t.status==='concluida');
+      return '<div class="prop-card" style="padding:10px 12px;margin-bottom:8px;'+(done?'opacity:.6':'')+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><b style="font-size:14px"><a href="#" data-tkact="abrir" data-id="'+t.id+'" style="color:inherit;text-decoration:none">'+esc(t.titulo||'(sem título)')+'</a></b>'+(done?' <span class="prop-chip" style="background:#dcfce7;color:#16a34a">concluída</span>':'')+(t.repetir_dias?' <span class="text-sm text-muted">🔁 '+t.repetir_dias+'d</span>':'')+(t.data?'<div class="text-sm text-muted">📅 '+fmtD(t.data)+'</div>':'')+'</div><div style="display:flex;gap:4px"><button class="fel-ic" data-tkact="abrir" data-id="'+t.id+'" title="Abrir">↗</button>'+(!done?'<button class="fel-ic" data-tkact="del" data-id="'+t.id+'" title="Excluir" style="color:var(--danger)">🗑️</button>':'')+'</div></div></div>';
+    }).join('')||'<p class="text-sm text-muted">Nenhuma tarefa.</p>';
+    return '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn btn-primary btn-sm" data-tkact="nova">＋ Nova tarefa</button></div>'+rows;
+  }
+  async function abrirTarefaModal(tk, oppId){
+    var full=tk||{}; if(tk&&tk.id){ try{ full=await _authFetch('GET','/proposta/tarefas/'+tk.id); }catch(e){ full=tk; } }
+    var coms=full.comentarios||[]; var done=(full.status==='concluida');
+    var ov=document.createElement('div'); ov.className='prop-ov';
+    ov.innerHTML='<div class="prop-mod" style="max-width:840px"><div class="hd"><h3 style="margin:0">Tarefa</h3><div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" data-tx="close">Fechar</button>'+((full.id&&!done)?'<button class="btn btn-sm" style="background:#16a34a;color:#fff;border:none" data-tx="finalizar">✔ Finalizar tarefa</button>':'')+(!done?'<button class="btn btn-sm btn-primary" data-tx="salvar">💾 Salvar</button>':'')+'</div></div>'
+      +'<div class="bd"><div style="display:flex;gap:16px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:280px">'
+          +'<div class="form-group"><label class="form-label">Fazer</label><input id="tk-titulo" class="form-control" value="'+esc(full.titulo||'')+'"'+(done?' disabled':'')+'></div>'
+          +'<div class="form-group"><label class="form-label">Descrição</label><textarea id="tk-desc" class="form-control" rows="4" placeholder="Programar interações, cases, retorno..."'+(done?' disabled':'')+'>'+esc(full.descricao||'')+'</textarea></div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Data</label><input id="tk-data" type="date" class="form-control" value="'+(full.data||'')+'"'+(done?' disabled':'')+'></div><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Repetir (dias)</label><input id="tk-rep" type="number" min="0" class="form-control" value="'+(full.repetir_dias!=null?full.repetir_dias:'')+'" placeholder="em branco = não repete"'+(done?' disabled':'')+'></div></div>'
+          +(done?'<p class="text-sm" style="color:#16a34a;font-weight:600">✔ Concluída em '+fmtDT(full.concluida_em)+'</p>':'')
+        +'</div>'
+        +'<div style="flex:1;min-width:280px"><div style="font-weight:700;margin-bottom:6px">Comentários da atividade</div>'
+          +(full.id?'<div style="display:flex;gap:6px;margin-bottom:10px"><input id="tk-com" class="form-control" placeholder="Novo comentário" style="flex:1"><button class="btn btn-sm btn-primary" data-tx="comentar">Enviar</button></div>':'<p class="text-sm text-muted">Salve a tarefa para comentar.</p>')
+          +'<div>'+(coms.map(function(c){ return '<div style="border-bottom:1px solid var(--border,#eee);padding:7px 0"><div style="font-size:14px;white-space:pre-wrap">'+esc(c.texto||'')+'</div><div style="font-size:11px;color:var(--text-muted)">'+fmtDT(c.data_hora)+(c.usuario?' · '+esc(c.usuario):'')+'</div></div>'; }).join('')||'<p class="text-sm text-muted">Sem comentários.</p>')+'</div>'
+        +'</div>'
+      +'</div></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', async function(e){
+      if(e.target===ov){ ov.remove(); return; }
+      var x=e.target.closest('[data-tx]'); if(!x) return; var act=x.getAttribute('data-tx');
+      if(act==='close'){ ov.remove(); return; }
+      if(act==='salvar'){
+        var body={ oportunidade_id:oppId||full.oportunidade_id||null, titulo:document.getElementById('tk-titulo').value, descricao:document.getElementById('tk-desc').value, data:document.getElementById('tk-data').value||null, repetir_dias:(document.getElementById('tk-rep').value!==''?parseInt(document.getElementById('tk-rep').value):null) };
+        try{ if(full.id) await _authFetch('PATCH','/proposta/tarefas/'+full.id,body); else await _authFetch('POST','/proposta/tarefas',body); toast('Tarefa salva','success'); ov.remove(); if(window._opDetId) abrirOpDetalhe(window._opDetId); }catch(err){ toast('Erro: '+err.message,'error'); }
+        return;
+      }
+      if(act==='comentar'){ var ci=document.getElementById('tk-com'); var txt=(ci&&ci.value||'').trim(); if(!txt) return; try{ await _authFetch('POST','/proposta/tarefas/'+full.id+'/comentarios',{texto:txt}); ov.remove(); abrirTarefaModal({id:full.id}, oppId); }catch(err){ toast('Erro','error'); } return; }
+      if(act==='finalizar'){ var oi=document.getElementById('tk-com'); var obs=(oi&&oi.value||'').trim(); if(!confirm('Finalizar a tarefa?'+(full.repetir_dias?' (reabre em '+full.repetir_dias+' dias)':''))) return; try{ await _authFetch('POST','/proposta/tarefas/'+full.id+'/finalizar',{observacao:obs||null}); toast('Tarefa finalizada','success'); ov.remove(); if(window._opDetId) abrirOpDetalhe(window._opDetId); }catch(err){ toast('Erro','error'); } return; }
+    });
+  }
   function renderDetalhe(){
     var d=window._opDet; if(!d) return;
     var root=document.getElementById('funil-root'); if(!root) return;
@@ -8573,7 +8612,7 @@ window.abrirBebidaModal=function(beb, mode){
     var tab=window._opTab||'historico';
     var m1=MENU1.map(function(t){ var on=(tab===t[0]); return '<button class="op-m1" data-m1="'+t[0]+'" style="border:none;cursor:pointer;padding:7px 14px;font-size:13px;font-weight:600;border-radius:8px;background:'+(on?'#6d28d9':'#ede9fe')+';color:'+(on?'#fff':'#6d28d9')+'">'+t[1]+'</button>'; }).join('');
     var content;
-    if(tab==='historico') content='<div style="margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#6d28d9;border-bottom:2px solid #6d28d9;padding:0 6px 6px">Interação</span></div>'+interacaoPanel(d);
+    if(tab==='historico'){ var hs=window._opHistSub||'interacao'; var sub=[['interacao','Interação'],['tarefas','Tarefas']].map(function(x){ var on=(hs===x[0]); return '<button class="op-hsub" data-hsub="'+x[0]+'" style="border:none;cursor:pointer;padding:5px 12px;font-size:13px;font-weight:700;border-radius:8px;background:'+(on?'#6d28d9':'#ede9fe')+';color:'+(on?'#fff':'#6d28d9')+'">'+x[1]+'</button>'; }).join(''); content='<div style="display:flex;gap:6px;margin-bottom:10px">'+sub+'</div>'+(hs==='tarefas'?tarefasPanel(d):interacaoPanel(d)); }
     else if(tab==='pre-venda') content=preVendaPanel();
     else content='<p class="text-sm text-muted" style="padding:16px 4px">'+(MENU1.filter(function(x){return x[0]===tab;})[0]||['','?'])[1]+' — em construção.</p>';
     var right='<div class="prop-card"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+m1+'</div>'+content+'</div>';
@@ -8589,6 +8628,7 @@ window.abrirBebidaModal=function(beb, mode){
     root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
     await ensureMaps();
     var d; try{ d=await _authFetch('GET','/proposta/oportunidades/'+id); }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
+    try{ d.tarefas=await _authFetch('GET','/proposta/tarefas?oportunidade_id='+id)||[]; }catch(e){ d.tarefas=[]; }
     window._opDet=d; window._opDetId=id;
     renderDetalhe();
   }
@@ -8682,6 +8722,13 @@ window.abrirBebidaModal=function(beb, mode){
       if(m1b){ e.preventDefault(); window._opTab=m1b.getAttribute('data-m1'); renderDetalhe(); return; }
       var m2b=e.target.closest && e.target.closest('#funil-root .op-m2');
       if(m2b){ e.preventDefault(); window._opPreTab=m2b.getAttribute('data-m2'); renderDetalhe(); return; }
+      var hsb=e.target.closest && e.target.closest('#funil-root .op-hsub');
+      if(hsb){ e.preventDefault(); window._opHistSub=hsb.getAttribute('data-hsub'); renderDetalhe(); return; }
+      var tkb=e.target.closest && e.target.closest('#funil-root [data-tkact]');
+      if(tkb){ e.preventDefault(); var ta=tkb.getAttribute('data-tkact'), tkid=tkb.getAttribute('data-id');
+        if(ta==='nova'){ abrirTarefaModal(null, window._opDetId); return; }
+        if(ta==='abrir'){ abrirTarefaModal({id:tkid}, window._opDetId); return; }
+        if(ta==='del'){ if(confirm('Excluir tarefa?')){ _authFetch('DELETE','/proposta/tarefas/'+tkid).then(function(){ if(window._opDetId) abrirOpDetalhe(window._opDetId); }).catch(function(err){toast(err.message,'error');}); } return; } }
       var stg=e.target.closest && e.target.closest('#funil-root [data-stage]');
       if(stg){ e.preventDefault(); var etp=stg.getAttribute('data-stage'); var dd=window._opDet; if(dd&&etp!==dd.etapa){ _authFetch('PATCH','/proposta/oportunidades/'+dd.id,{etapa:etp}).then(function(){ abrirOpDetalhe(dd.id); }).catch(function(err){toast(err.message,'error');}); } return; }
       var tab=e.target.closest && e.target.closest('#funil-root .op-int-tab');
