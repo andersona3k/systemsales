@@ -1,6 +1,6 @@
 import io
 from uuid import UUID
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File, Form
 from fastapi.responses import Response
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.proposta import (
     PropConfig, PropTemplate, PropProduto, PropContentBlock,
-    PropProposta, PropGrupo, PropItem, PropPerda, Funil, Oportunidade, OpInteracao,
+    PropProposta, PropGrupo, PropItem, PropPerda, Funil, Oportunidade, OpInteracao, Tarefa, TarefaComentario,
 )
 from ..services.auth_service import get_current_user
 from ..config import get_settings
@@ -461,3 +461,108 @@ def add_interacao(oid: UUID, tipo: str = Form("nota"), texto: str = Form(""), ar
     i = OpInteracao(oportunidade_id=oid, tipo=tipo or "nota", texto=texto, usuario=_username(user), anexos=anexos)
     db.add(i); db.commit(); db.refresh(i)
     return _int_out(i)
+
+
+# ---------- Tarefas ----------
+def _tcom_out(c):
+    return {"id": str(c.id), "texto": c.texto, "usuario": c.usuario,
+            "data_hora": c.data_hora.isoformat() if c.data_hora else None}
+
+
+def _tarefa_out(t, coms=None):
+    d = {"id": str(t.id),
+         "oportunidade_id": str(t.oportunidade_id) if t.oportunidade_id else None,
+         "empresa_id": str(t.empresa_id) if t.empresa_id else None,
+         "titulo": t.titulo, "descricao": t.descricao,
+         "data": t.data.isoformat() if t.data else None,
+         "repetir_dias": t.repetir_dias, "status": t.status or "aberta", "usuario": t.usuario,
+         "criado_em": t.criado_em.isoformat() if t.criado_em else None,
+         "concluida_em": t.concluida_em.isoformat() if t.concluida_em else None}
+    if coms is not None:
+        d["comentarios"] = [_tcom_out(c) for c in coms]
+    return d
+
+
+@router.get("/tarefas")
+def listar_tarefas(oportunidade_id: str | None = None, empresa_id: str | None = None,
+                   status: str | None = None, desde: str | None = None, ate: str | None = None,
+                   db: Session = Depends(get_db), _=Depends(get_current_user)):
+    q = db.query(Tarefa)
+    if oportunidade_id: q = q.filter(Tarefa.oportunidade_id == oportunidade_id)
+    if empresa_id: q = q.filter(Tarefa.empresa_id == empresa_id)
+    if status: q = q.filter(Tarefa.status == status)
+    if desde: q = q.filter(Tarefa.data >= date.fromisoformat(desde))
+    if ate: q = q.filter(Tarefa.data <= date.fromisoformat(ate))
+    return [_tarefa_out(t) for t in q.order_by(Tarefa.data.asc(), Tarefa.criado_em.desc()).all()]
+
+
+@router.get("/tarefas/{tid}")
+def obter_tarefa(tid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    t = db.query(Tarefa).filter(Tarefa.id == tid).first()
+    if not t: raise HTTPException(404, "Tarefa nao encontrada")
+    coms = db.query(TarefaComentario).filter(TarefaComentario.tarefa_id == tid).order_by(TarefaComentario.data_hora.desc()).all()
+    return _tarefa_out(t, coms)
+
+
+@router.post("/tarefas", status_code=201)
+def criar_tarefa(dados: dict = Body(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
+    dt = dados.get("data")
+    t = Tarefa(oportunidade_id=dados.get("oportunidade_id"), empresa_id=dados.get("empresa_id"),
+               titulo=dados.get("titulo"), descricao=dados.get("descricao"),
+               data=date.fromisoformat(dt) if dt else None,
+               repetir_dias=(int(dados["repetir_dias"]) if dados.get("repetir_dias") not in (None, "") else None),
+               usuario=_username(user))
+    db.add(t); db.commit(); db.refresh(t)
+    return _tarefa_out(t)
+
+
+@router.patch("/tarefas/{tid}")
+def atualizar_tarefa(tid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    t = db.query(Tarefa).filter(Tarefa.id == tid).first()
+    if not t: raise HTTPException(404, "Tarefa nao encontrada")
+    for k in ("oportunidade_id", "empresa_id", "titulo", "descricao", "status"):
+        if k in dados: setattr(t, k, dados[k])
+    if "data" in dados:
+        t.data = date.fromisoformat(dados["data"]) if dados.get("data") else None
+    if "repetir_dias" in dados:
+        t.repetir_dias = int(dados["repetir_dias"]) if dados.get("repetir_dias") not in (None, "") else None
+    db.commit(); db.refresh(t)
+    return _tarefa_out(t)
+
+
+@router.delete("/tarefas/{tid}", status_code=204)
+def deletar_tarefa(tid: UUID, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    t = db.query(Tarefa).filter(Tarefa.id == tid).first()
+    if t: db.delete(t); db.commit()
+
+
+@router.post("/tarefas/{tid}/comentarios", status_code=201)
+def add_tarefa_comentario(tid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
+    t = db.query(Tarefa).filter(Tarefa.id == tid).first()
+    if not t: raise HTTPException(404, "Tarefa nao encontrada")
+    c = TarefaComentario(tarefa_id=tid, texto=dados.get("texto"), usuario=_username(user))
+    db.add(c); db.commit(); db.refresh(c)
+    return _tcom_out(c)
+
+
+@router.post("/tarefas/{tid}/finalizar")
+def finalizar_tarefa(tid: UUID, dados: dict = Body(default={}), db: Session = Depends(get_db), user=Depends(get_current_user)):
+    t = db.query(Tarefa).filter(Tarefa.id == tid).first()
+    if not t: raise HTTPException(404, "Tarefa nao encontrada")
+    obs = (dados or {}).get("observacao")
+    t.status = "concluida"; t.concluida_em = datetime.utcnow()
+    if obs:
+        db.add(TarefaComentario(tarefa_id=t.id, texto=obs, usuario=_username(user)))
+    if t.oportunidade_id:
+        txt = "✅ Tarefa concluída: " + (t.titulo or "")
+        if obs: txt += " — " + obs
+        db.add(OpInteracao(oportunidade_id=t.oportunidade_id, tipo="nota", texto=txt, usuario=_username(user)))
+    nova_id = None
+    if t.repetir_dias and t.repetir_dias > 0:
+        base = t.data or date.today()
+        nova = Tarefa(oportunidade_id=t.oportunidade_id, empresa_id=t.empresa_id, titulo=t.titulo,
+                      descricao=t.descricao, data=base + timedelta(days=t.repetir_dias),
+                      repetir_dias=t.repetir_dias, status="aberta", usuario=_username(user))
+        db.add(nova); db.flush(); nova_id = str(nova.id)
+    db.commit()
+    return {"ok": True, "nova_tarefa_id": nova_id}

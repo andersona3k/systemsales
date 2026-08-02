@@ -150,3 +150,27 @@ class OpInteracao(Base):
     usuario = Column(String(120))
     anexos = Column(JSONB, default=list)
     data_hora = Column(DateTime, default=datetime.utcnow)
+
+
+class Tarefa(Base):
+    __tablename__ = "com_tarefas"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    oportunidade_id = Column(UUID(as_uuid=True), ForeignKey("com_oportunidades.id", ondelete="CASCADE"))
+    empresa_id = Column(UUID(as_uuid=True), ForeignKey("prosp_empresas.id"))
+    titulo = Column(String(300))
+    descricao = Column(Text)
+    data = Column(Date)
+    repetir_dias = Column(Integer)
+    status = Column(String(20), default="aberta", server_default=text("'aberta'"))
+    usuario = Column(String(120))
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    concluida_em = Column(DateTime)
+
+
+class TarefaComentario(Base):
+    __tablename__ = "com_tarefa_comentarios"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tarefa_id = Column(UUID(as_uuid=True), ForeignKey("com_tarefas.id", ondelete="CASCADE"), nullable=False)
+    texto = Column(Text)
+    usuario = Column(String(120))
+    data_hora = Column(DateTime, default=datetime.utcnow)
