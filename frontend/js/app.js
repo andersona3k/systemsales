@@ -8479,6 +8479,11 @@ window.abrirBebidaModal=function(beb, mode){
     var x=m[f||'frio']||m.frio;
     return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:'+x[1]+'"><span style="width:11px;height:11px;border-radius:50%;background:'+x[1]+';display:inline-block;flex:0 0 auto"></span>'+x[0]+'</span>';
   }
+  function farolDot(f){
+    var m={quente:['Quente','#16a34a'],morno:['Morno','#f59e0b'],frio:['Frio','#2563eb']};
+    var x=m[f||'frio']||m.frio;
+    return '<span title="'+x[0]+'" style="width:14px;height:14px;border-radius:50%;background:'+x[1]+';display:inline-block;flex:0 0 auto"></span>';
+  }
   function avatar(nome){
     var ini=((nome||'').trim().charAt(0)||'?').toUpperCase();
     return '<span title="'+esc(nome||'sem vendedor')+'" style="width:22px;height:22px;border-radius:50%;background:#6366f1;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 auto">'+esc(ini)+'</span>';
@@ -8488,13 +8493,12 @@ window.abrirBebidaModal=function(beb, mode){
     var num=o.numero?('#'+String(o.numero).padStart(3,'0')):'';
     var dias=(o.dias_etapa!=null)?(o.dias_etapa+'d'):'';
     var fc=o.forecast||{}; var rev=parseFloat(fc.revenda_hw)||0, serv=parseFloat(fc.servicos)||0, saas=parseFloat(fc.saas_haas)||0;
-    var linhas='<div style="margin-top:6px;font-size:11px;color:#6b7280;line-height:1.6"><div style="display:flex;justify-content:space-between"><span>Revenda HW</span><span>'+money(rev)+'</span></div><div style="display:flex;justify-content:space-between"><span>Serviços</span><span>'+money(serv)+'</span></div><div style="display:flex;justify-content:space-between"><span>SaaS/HaaS</span><span>'+money(saas)+'/mês</span></div></div>';
     var resumo='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--border,#eee)"><span style="font-weight:700;font-size:12px">'+money(rev+serv)+'</span><span style="font-weight:700;font-size:12px;color:#2563eb">'+money(saas)+'/mês</span></div>';
     return '<div class="fn-card" draggable="true" data-opid="'+o.id+'" data-fnact="detalhe" data-id="'+o.id+'" style="cursor:pointer">'
       +'<div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start"><b style="font-size:13px;line-height:1.2">'+esc(o.titulo||'(sem título)')+(num?' <span class="text-sm text-muted">'+num+'</span>':'')+'</b>'+taskIcon(o)+'</div>'
       +(emp?'<div class="text-sm text-muted" style="margin:2px 0">'+esc(emp)+'</div>':'')
-      +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px">'+avatar(o.vendedor)+farolTag(o.farol)+'<span style="margin-left:auto;font-size:11px;color:#6b7280">'+dias+'</span></div>'
-      +linhas+resumo
+      +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px">'+avatar(o.vendedor)+farolDot(o.farol)+'<span style="margin-left:auto;font-size:11px;color:#6b7280">'+dias+'</span></div>'
+      +resumo
     +'</div>';
   }
   async function carregarFunil(){
@@ -8514,8 +8518,9 @@ window.abrirBebidaModal=function(beb, mode){
     var sel=funis.length>1?('<select id="fn-sel" class="form-control" style="width:auto;display:inline-block">'+funis.map(function(f){ return '<option value="'+f.id+'"'+(f.id===funil.id?' selected':'')+'>'+esc(f.nome)+'</option>'; }).join('')+'</select>'):('<span style="font-weight:700;font-size:16px">'+esc(funil.nome)+'</span>');
     var colsHtml=etapas.map(function(et){
       var cards=ops.filter(function(o){return o.etapa===et;});
+      var tot=0, mens=0; cards.forEach(function(o){ var fc=o.forecast||{}; tot+=(parseFloat(fc.revenda_hw)||0)+(parseFloat(fc.servicos)||0); mens+=(parseFloat(fc.saas_haas)||0); });
       var cardsHtml=cards.map(function(o){ return opCard(o); }).join('');
-      return '<div class="fn-col" data-etapa="'+esc(et)+'"><div class="fn-col-h"><span>'+esc(et)+'</span><span class="text-sm text-muted">'+cards.length+'</span></div>'+cardsHtml+'</div>';
+      return '<div class="fn-col" data-etapa="'+esc(et)+'"><div class="fn-col-h"><div><div>'+esc(et)+'</div><div style="font-size:11px;font-weight:600;color:#6b7280">'+money(tot)+(mens?' · '+money(mens)+'/mês':'')+'</div></div><span class="text-sm text-muted">'+cards.length+'</span></div>'+cardsHtml+'</div>';
     }).join('')||'<p class="text-sm text-muted">Este funil não tem etapas. Configure em Configurações.</p>';
     root.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">'+sel+'<button class="btn btn-primary btn-sm" data-fnact="nova">＋ Adicionar Oportunidade</button></div><div class="fn-board">'+colsHtml+'</div>';
   }
@@ -8530,6 +8535,10 @@ window.abrirBebidaModal=function(beb, mode){
       +row('Contato',esc(pes.nome||''))+row('Telefone',esc(pes.telefone||''))+row('E-mail',esc(pes.email||''))
       +row('Vendedor',esc(d.vendedor||''))+row('Tipo',esc(d.tipo||''))+row('Origem',esc(d.origem||''))
       +row('Farol',farolTag(d.farol))+row('Próxima tarefa',fmtD(d.data_tarefa))+row('Dias na etapa',(d.dias_etapa!=null?d.dias_etapa+' dias':'—'))
+      +'<div style="padding:8px 0 4px;border-top:1px solid var(--border,#eee);margin-top:2px"><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px">Forecast</div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:14px;padding:2px 0"><span>Revenda HW</span><span>'+money(parseFloat((d.forecast||{}).revenda_hw)||0)+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:14px;padding:2px 0"><span>Serviços</span><span>'+money(parseFloat((d.forecast||{}).servicos)||0)+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:14px;padding:2px 0"><span>SaaS/HaaS</span><span>'+money(parseFloat((d.forecast||{}).saas_haas)||0)+'/mês</span></div></div>'
       +((d.marcadores&&d.marcadores.length)?'<div style="padding:6px 0">'+d.marcadores.map(function(m){return '<span class="fn-tag">'+esc(m)+'</span>';}).join('')+'</div>':'')
     +'</div>';
   }
