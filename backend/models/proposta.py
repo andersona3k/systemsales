@@ -130,6 +130,7 @@ class Oportunidade(Base):
     marcadores = Column(JSONB, default=list)
     origem = Column(String(80))
     tipo = Column(String(40))
+    forecast = Column(JSONB, default=dict)
     numero = Column(Integer)
     farol = Column(String(10), default="frio", server_default=text("'frio'"))
     data_tarefa = Column(Date)

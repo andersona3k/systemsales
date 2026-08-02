@@ -351,7 +351,7 @@ def _op_out(o):
     return {"id": str(o.id), "funil_id": str(o.funil_id), "numero": o.numero, "etapa": o.etapa, "titulo": o.titulo,
             "empresa_id": str(o.empresa_id) if o.empresa_id else None,
             "pessoa_id": str(o.pessoa_id) if o.pessoa_id else None,
-            "vendedor": o.vendedor, "marcadores": o.marcadores or [], "origem": o.origem, "tipo": o.tipo,
+            "vendedor": o.vendedor, "marcadores": o.marcadores or [], "origem": o.origem, "tipo": o.tipo, "forecast": o.forecast or {},
             "farol": o.farol or "frio", "sinaleiro": o.sinaleiro or "red", "ordem": o.ordem or 0,
             "arquivado": o.arquivado, "data_tarefa": o.data_tarefa.isoformat() if o.data_tarefa else None,
             "dias_etapa": dias, "criado_em": o.criado_em.isoformat() if o.criado_em else None}
@@ -410,7 +410,7 @@ def criar_oportunidade(dados: dict = Body(...), db: Session = Depends(get_db), _
     o = Oportunidade(funil_id=dados.get("funil_id"), etapa=dados.get("etapa"), titulo=dados.get("titulo"),
                      empresa_id=dados.get("empresa_id"), pessoa_id=dados.get("pessoa_id"),
                      vendedor=dados.get("vendedor"), marcadores=dados.get("marcadores") or [],
-                     origem=dados.get("origem"), tipo=dados.get("tipo"), farol=dados.get("farol") or "frio",
+                     origem=dados.get("origem"), tipo=dados.get("tipo"), forecast=dados.get("forecast") or {}, farol=dados.get("farol") or "frio",
                      numero=maxn + 1, data_entrada_etapa=datetime.utcnow(),
                      data_tarefa=date.fromisoformat(dt) if dt else None)
     db.add(o); db.commit(); db.refresh(o)
@@ -426,7 +426,7 @@ def atualizar_oportunidade(oid: UUID, dados: dict = Body(...), db: Session = Dep
         db.add(OpInteracao(oportunidade_id=o.id, tipo="sistema", texto='Movido de "' + str(o.etapa or "") + '" para "' + str(dados["etapa"]) + '"', usuario=_username(user)))
     if "data_tarefa" in dados:
         o.data_tarefa = date.fromisoformat(dados["data_tarefa"]) if dados.get("data_tarefa") else None
-    for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "farol", "sinaleiro", "ordem", "arquivado"):
+    for k in ("etapa", "titulo", "empresa_id", "pessoa_id", "vendedor", "marcadores", "origem", "tipo", "forecast", "farol", "sinaleiro", "ordem", "arquivado"):
         if k in dados: setattr(o, k, dados[k])
     db.commit(); db.refresh(o)
     return _op_out(o)

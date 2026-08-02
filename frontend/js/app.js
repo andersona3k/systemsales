@@ -8455,6 +8455,7 @@ window.abrirBebidaModal=function(beb, mode){
   function hojeISO(){ return new Date(Date.now()-3*3600*1000).toISOString().slice(0,10); }
   function fmtDT(iso){ if(!iso) return ''; var s=(/[Z+]/.test((''+iso).slice(10)))?iso:iso+'Z'; var d=new Date(s); if(isNaN(d)) return iso; d=new Date(d.getTime()-3*3600*1000); function p(n){return ('0'+n).slice(-2);} return p(d.getUTCDate())+'/'+p(d.getUTCMonth()+1)+'/'+d.getUTCFullYear()+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes()); }
   function fmtD(iso){ if(!iso) return '—'; var a=(''+iso).split('-'); if(a.length<3) return iso; return a[2]+'/'+a[1]+'/'+a[0]; }
+  function money(n){ return 'R$ '+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
 
   async function opConfig(){
     var oc={}; var ks=['op_marcadores','op_origem','op_tipo','op_vendedores'];
@@ -8474,9 +8475,9 @@ window.abrirBebidaModal=function(beb, mode){
     return '<span title="Tarefa programada: '+o.data_tarefa+'" style="color:#2563eb">📅</span>';
   }
   function farolTag(f){
-    var m={quente:['Quente','#dc2626'],morno:['Morno','#f59e0b'],frio:['Frio','#2563eb']};
+    var m={quente:['Quente','#16a34a'],morno:['Morno','#f59e0b'],frio:['Frio','#2563eb']};
     var x=m[f||'frio']||m.frio;
-    return '<span style="display:inline-flex;align-items:center;gap:3px;background:'+x[1]+'22;color:'+x[1]+';border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600">🌡️'+x[0]+'</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:'+x[1]+'"><span style="width:11px;height:11px;border-radius:50%;background:'+x[1]+';display:inline-block;flex:0 0 auto"></span>'+x[0]+'</span>';
   }
   function avatar(nome){
     var ini=((nome||'').trim().charAt(0)||'?').toUpperCase();
@@ -8486,10 +8487,14 @@ window.abrirBebidaModal=function(beb, mode){
     var emp=(window._propEmp||{})[o.empresa_id]||'';
     var num=o.numero?('#'+String(o.numero).padStart(3,'0')):'';
     var dias=(o.dias_etapa!=null)?(o.dias_etapa+'d'):'';
+    var fc=o.forecast||{}; var rev=parseFloat(fc.revenda_hw)||0, serv=parseFloat(fc.servicos)||0, saas=parseFloat(fc.saas_haas)||0;
+    var linhas='<div style="margin-top:6px;font-size:11px;color:#6b7280;line-height:1.6"><div style="display:flex;justify-content:space-between"><span>Revenda HW</span><span>'+money(rev)+'</span></div><div style="display:flex;justify-content:space-between"><span>Serviços</span><span>'+money(serv)+'</span></div><div style="display:flex;justify-content:space-between"><span>SaaS/HaaS</span><span>'+money(saas)+'/mês</span></div></div>';
+    var resumo='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--border,#eee)"><span style="font-weight:700;font-size:12px">'+money(rev+serv)+'</span><span style="font-weight:700;font-size:12px;color:#2563eb">'+money(saas)+'/mês</span></div>';
     return '<div class="fn-card" draggable="true" data-opid="'+o.id+'" data-fnact="detalhe" data-id="'+o.id+'" style="cursor:pointer">'
       +'<div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start"><b style="font-size:13px;line-height:1.2">'+esc(o.titulo||'(sem título)')+(num?' <span class="text-sm text-muted">'+num+'</span>':'')+'</b>'+taskIcon(o)+'</div>'
       +(emp?'<div class="text-sm text-muted" style="margin:2px 0">'+esc(emp)+'</div>':'')
       +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px">'+avatar(o.vendedor)+farolTag(o.farol)+'<span style="margin-left:auto;font-size:11px;color:#6b7280">'+dias+'</span></div>'
+      +linhas+resumo
     +'</div>';
   }
   async function carregarFunil(){
@@ -8509,7 +8514,7 @@ window.abrirBebidaModal=function(beb, mode){
     var sel=funis.length>1?('<select id="fn-sel" class="form-control" style="width:auto;display:inline-block">'+funis.map(function(f){ return '<option value="'+f.id+'"'+(f.id===funil.id?' selected':'')+'>'+esc(f.nome)+'</option>'; }).join('')+'</select>'):('<span style="font-weight:700;font-size:16px">'+esc(funil.nome)+'</span>');
     var colsHtml=etapas.map(function(et){
       var cards=ops.filter(function(o){return o.etapa===et;});
-      var cardsHtml=cards.map(function(o){ return opCard(o); }).join('')||'<div class="text-sm text-muted" style="padding:6px">—</div>';
+      var cardsHtml=cards.map(function(o){ return opCard(o); }).join('');
       return '<div class="fn-col" data-etapa="'+esc(et)+'"><div class="fn-col-h"><span>'+esc(et)+'</span><span class="text-sm text-muted">'+cards.length+'</span></div>'+cardsHtml+'</div>';
     }).join('')||'<p class="text-sm text-muted">Este funil não tem etapas. Configure em Configurações.</p>';
     root.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">'+sel+'<button class="btn btn-primary btn-sm" data-fnact="nova">＋ Adicionar Oportunidade</button></div><div class="fn-board">'+colsHtml+'</div>';
@@ -8524,7 +8529,7 @@ window.abrirBebidaModal=function(beb, mode){
       +row('Empresa',esc(emp.nome||''))+row('CNPJ',esc(emp.cnpj||''))
       +row('Contato',esc(pes.nome||''))+row('Telefone',esc(pes.telefone||''))+row('E-mail',esc(pes.email||''))
       +row('Vendedor',esc(d.vendedor||''))+row('Tipo',esc(d.tipo||''))+row('Origem',esc(d.origem||''))
-      +row('Farol',farolLbl)+row('Próxima tarefa',fmtD(d.data_tarefa))+row('Dias na etapa',(d.dias_etapa!=null?d.dias_etapa+' dias':'—'))
+      +row('Farol',farolTag(d.farol))+row('Próxima tarefa',fmtD(d.data_tarefa))+row('Dias na etapa',(d.dias_etapa!=null?d.dias_etapa+' dias':'—'))
       +((d.marcadores&&d.marcadores.length)?'<div style="padding:6px 0">'+d.marcadores.map(function(m){return '<span class="fn-tag">'+esc(m)+'</span>';}).join('')+'</div>':'')
     +'</div>';
   }
@@ -8655,6 +8660,8 @@ window.abrirBebidaModal=function(beb, mode){
       +'<div class="form-group"><label class="form-label">Marcadores</label><div>'+mkrHtml+'</div></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Origem</label><select id="op-ori" class="form-control">'+listOpts(oc.op_origem,op.origem,'— origem —')+'</select></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Tipo</label><select id="op-tipo" class="form-control">'+listOpts(oc.op_tipo,op.tipo,'— tipo —')+'</select></div><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Etapa</label><select id="op-etapa" class="form-control">'+etapaOpts+'</select></div></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:130px"><label class="form-label">Farol</label><select id="op-farol" class="form-control">'+farolOpts+'</select></div><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Próxima tarefa</label><input id="op-tarefa" type="date" class="form-control" value="'+(op.data_tarefa||'')+'"></div></div>'
+      +'<hr style="margin:12px 0;border:none;border-top:1px solid var(--border)"><div style="font-weight:600;margin-bottom:4px">Forecast (estimativa)</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Revenda HW</label><input id="op-fc-rev" type="number" step="0.01" class="form-control" value="'+((op.forecast||{}).revenda_hw!=null?(op.forecast||{}).revenda_hw:'')+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Serviços</label><input id="op-fc-serv" type="number" step="0.01" class="form-control" value="'+((op.forecast||{}).servicos!=null?(op.forecast||{}).servicos:'')+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">SaaS/HaaS (mensal)</label><input id="op-fc-saas" type="number" step="0.01" class="form-control" value="'+((op.forecast||{}).saas_haas!=null?(op.forecast||{}).saas_haas:'')+'"></div></div>'
       +'</div>');
     ov.addEventListener('change', function(e){ if(e.target.id==='op-emp'){ var pe=document.getElementById('op-pes'); if(pe) pe.innerHTML=pesOpts(e.target.value,''); } });
     ov.addEventListener('click', async function(e){
@@ -8663,7 +8670,7 @@ window.abrirBebidaModal=function(beb, mode){
       if(act==='close'){ ov.remove(); return; }
       if(act==='salvar'){
         var mk=[]; ov.querySelectorAll('.op-mkr:checked').forEach(function(c){ mk.push(c.value); });
-        var body={ funil_id:funil.id||op.funil_id, titulo:v('op-titulo'), empresa_id:v('op-emp')||null, pessoa_id:v('op-pes')||null, vendedor:v('op-vend')||null, marcadores:mk, origem:v('op-ori')||null, tipo:v('op-tipo')||null, etapa:v('op-etapa')||((funil.etapas||[])[0]||null), farol:v('op-farol')||'frio', data_tarefa:v('op-tarefa')||null };
+        var body={ funil_id:funil.id||op.funil_id, titulo:v('op-titulo'), empresa_id:v('op-emp')||null, pessoa_id:v('op-pes')||null, vendedor:v('op-vend')||null, marcadores:mk, origem:v('op-ori')||null, tipo:v('op-tipo')||null, etapa:v('op-etapa')||((funil.etapas||[])[0]||null), farol:v('op-farol')||'frio', data_tarefa:v('op-tarefa')||null, forecast:{revenda_hw:parseFloat(v('op-fc-rev'))||0, servicos:parseFloat(v('op-fc-serv'))||0, saas_haas:parseFloat(v('op-fc-saas'))||0} };
         try{ var r; if(op.id) r=await _authFetch('PATCH','/proposta/oportunidades/'+op.id,body); else r=await _authFetch('POST','/proposta/oportunidades',body); toast('Oportunidade salva','success'); ov.remove(); if(window._opDetId) abrirOpDetalhe(op.id||(r&&r.id)); else carregarFunil(); }catch(err){ toast('Erro: '+err.message,'error'); }
       }
     });
