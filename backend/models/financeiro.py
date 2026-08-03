@@ -68,6 +68,7 @@ class FinLancamento(Base):
     categoria = Column(String(20), nullable=False)  # despesa | divida | receita | investimento
     metodo = Column(String(20), nullable=False)  # mensal | financiamento | pontual
     conta = Column(String(200))
+    responsavel = Column(String(30))
     descricao = Column(Text)
     credor_pagador = Column(String(200))
     valor = Column(Float, default=0)
@@ -102,6 +103,7 @@ class FinCcLancamento(Base):
     cartao = Column(String(30), nullable=False)
     conta = Column(String(200))
     sub_conta = Column(String(200))
+    responsavel = Column(String(30))
     descricao = Column(Text)
     credor_pagador = Column(String(200))
     metodo = Column(String(20), nullable=False)  # avista | parcelado | recorrente

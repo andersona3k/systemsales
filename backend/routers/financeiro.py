@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File
-from sqlalchemy import extract
+from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.financeiro import (
@@ -146,6 +146,9 @@ def _add_months(d: date, n: int) -> date:
     return date(ano, mes, dia)
 
 
+RESPONSAVEIS = ("Anderson", "Sil", "Sophia", "Casa", "A3K")
+
+
 def _status_parcela(p: FinParcela) -> str:
     if p.pago_em:
         return "pago"
@@ -169,7 +172,8 @@ def _parcela_out(p: FinParcela) -> dict:
         "observacao": p.observacao, "anexos": p.anexos or [],
         "pago_em": p.pago_em, "status": _status_parcela(p),
         "grupo": l.grupo if l else None, "categoria": l.categoria if l else None, "metodo": l.metodo if l else None,
-        "conta": l.conta if l else None, "descricao": l.descricao if l else None,
+        "conta": l.conta if l else None, "responsavel": l.responsavel if l else None,
+        "descricao": l.descricao if l else None,
         "credor_pagador": l.credor_pagador if l else None,
         "total_parcelas": len(l.parcelas) if l else None,
     }
@@ -193,10 +197,12 @@ def listar_financas_empresa(grupo: str | None = None, categoria: str | None = No
 
 @router.post("/financas-empresa", response_model=FinLancamentoOut, status_code=201)
 def criar_financa_empresa(dados: FinLancamentoIn, db: Session = Depends(get_db), _=Depends(get_current_user)):
-    if dados.grupo not in ("pessoal", "empresa", "familia"):
+    if dados.grupo not in ("pessoal", "empresa"):
         raise HTTPException(400, "Grupo inválido")
-    if dados.categoria not in ("despesa", "divida", "receita", "investimento", "consumo", "assinatura"):
+    if dados.categoria not in ("despesa", "divida", "receita", "investimento"):
         raise HTTPException(400, "Categoria inválida")
+    if dados.responsavel and dados.responsavel not in RESPONSAVEIS:
+        raise HTTPException(400, "Responsável inválido")
     if dados.metodo not in ("mensal", "financiamento", "pontual"):
         raise HTTPException(400, "Método inválido")
     if dados.metodo == "financiamento" and not dados.numero_parcelas:
@@ -219,11 +225,13 @@ def criar_financa_empresa(dados: FinLancamentoIn, db: Session = Depends(get_db),
 def atualizar_lancamento_empresa(lid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
     l = db.query(FinLancamento).filter(FinLancamento.id == lid).first()
     if not l: raise HTTPException(404, "Lançamento não encontrado")
-    if "grupo" in dados and dados["grupo"] not in ("pessoal", "empresa", "familia"):
+    if "grupo" in dados and dados["grupo"] not in ("pessoal", "empresa"):
         raise HTTPException(400, "Grupo inválido")
-    if "categoria" in dados and dados["categoria"] not in ("despesa", "divida", "receita", "investimento", "consumo", "assinatura"):
+    if "categoria" in dados and dados["categoria"] not in ("despesa", "divida", "receita", "investimento"):
         raise HTTPException(400, "Categoria inválida")
-    for k in ("grupo", "categoria", "conta", "descricao", "credor_pagador", "valor"):
+    if dados.get("responsavel") and dados["responsavel"] not in RESPONSAVEIS:
+        raise HTTPException(400, "Responsável inválido")
+    for k in ("grupo", "categoria", "conta", "responsavel", "descricao", "credor_pagador", "valor"):
         if k in dados: setattr(l, k, dados[k])
     db.commit(); db.refresh(l)
     return l
@@ -329,6 +337,7 @@ def _cc_parcela_out(p: FinCcParcela) -> dict:
         "cartao": l.cartao if l else None, "metodo": l.metodo if l else None,
         "metodo_pg": l.metodo_pg if l else None,
         "conta": l.conta if l else None, "sub_conta": l.sub_conta if l else None,
+        "responsavel": l.responsavel if l else None,
         "descricao": l.descricao if l else None,
         "credor_pagador": l.credor_pagador if l else None,
         "data_compra": l.data_compra if l else None,
@@ -347,14 +356,64 @@ def listar_financas_cartao(grupo: str | None = None, categoria: str | None = Non
     return [_cc_parcela_out(p) for p in parcelas]
 
 
+METODO_PG_PARA_MODO_PAGAMENTO = {"cartao": "credito", "pix": "pix", "dinheiro": "dinheiro", "debito": "debito_automatico"}
+
+
+def _sync_compra_avista_controle(dados: FinCcLancamentoIn, cartao_final: str, db: Session):
+    """Compra à vista (despesa/consumo) reflete automaticamente em 1 lançamento "Compras" no Controle financeiro,
+    acumulando no lançamento já existente do mesmo mês/ano com o mesmo Grupo+Responsável+Categoria+Conta."""
+    if dados.metodo != "avista" or dados.categoria not in ("despesa", "consumo"):
+        return
+    modo_pagamento = METODO_PG_PARA_MODO_PAGAMENTO.get(dados.metodo_pg)
+    if dados.metodo_pg == "cartao":
+        info = CARTOES.get(cartao_final)
+        dia = info["dia"] if info else None
+        data_ref = _venc_fatura_base(dia, dados.data_compra)
+        pago_em = None
+    else:
+        data_ref = dados.data_compra
+        pago_em = dados.data_compra
+
+    match = (
+        db.query(FinLancamento)
+        .filter(
+            FinLancamento.grupo == dados.grupo,
+            FinLancamento.categoria == dados.categoria,
+            FinLancamento.metodo == "compras",
+            FinLancamento.responsavel == dados.responsavel,
+            FinLancamento.conta == dados.conta,
+            extract("month", FinLancamento.data_inicio) == data_ref.month,
+            extract("year", FinLancamento.data_inicio) == data_ref.year,
+        )
+        .first()
+    )
+    if match:
+        match.valor = (match.valor or 0) + dados.valor
+        parcela = db.query(FinParcela).filter(FinParcela.lancamento_id == match.id).first()
+        if parcela:
+            parcela.valor = (parcela.valor or 0) + dados.valor
+            parcela.modo_pagamento = modo_pagamento
+    else:
+        novo = FinLancamento(
+            grupo=dados.grupo, categoria=dados.categoria, metodo="compras",
+            conta=dados.conta, responsavel=dados.responsavel,
+            descricao=dados.descricao, credor_pagador=dados.credor_pagador,
+            valor=dados.valor, data_inicio=data_ref,
+        )
+        db.add(novo); db.flush()
+        db.add(FinParcela(lancamento_id=novo.id, numero=1, vencimento=data_ref, valor=dados.valor, pago_em=pago_em, modo_pagamento=modo_pagamento))
+
+
 @router.post("/financas-cartao", response_model=FinCcLancamentoOut, status_code=201)
 def criar_financa_cartao(dados: FinCcLancamentoIn, db: Session = Depends(get_db), _=Depends(get_current_user)):
     if dados.grupo not in ("pessoal", "empresa"):
         raise HTTPException(400, "Grupo inválido")
-    if dados.categoria not in ("despesa", "divida", "receita", "investimento", "consumo", "assinatura"):
+    if dados.categoria not in ("despesa", "consumo", "assinatura"):
         raise HTTPException(400, "Categoria inválida")
     if dados.metodo_pg not in ("cartao", "dinheiro", "pix", "debito"):
         raise HTTPException(400, "Método PG inválido")
+    if dados.responsavel and dados.responsavel not in RESPONSAVEIS:
+        raise HTTPException(400, "Responsável inválido")
     cartao_final = dados.cartao if dados.metodo_pg == "cartao" else dados.metodo_pg
     if cartao_final not in CARTOES:
         raise HTTPException(400, "Cartão inválido")
@@ -385,6 +444,7 @@ def criar_financa_cartao(dados: FinCcLancamentoIn, db: Session = Depends(get_db)
         valores = [dados.valor] * qtd
     for i in range(qtd):
         db.add(FinCcParcela(lancamento_id=l.id, numero=i + 1, valor=valores[i]))
+    _sync_compra_avista_controle(dados, cartao_final, db)
     db.commit(); db.refresh(l)
     return l
 
@@ -395,13 +455,15 @@ def atualizar_lancamento_cartao(lid: UUID, dados: dict = Body(...), db: Session 
     if not l: raise HTTPException(404, "Lançamento não encontrado")
     if "grupo" in dados and dados["grupo"] not in ("pessoal", "empresa"):
         raise HTTPException(400, "Grupo inválido")
-    if "categoria" in dados and dados["categoria"] not in ("despesa", "divida", "receita", "investimento", "consumo", "assinatura"):
+    if "categoria" in dados and dados["categoria"] not in ("despesa", "consumo", "assinatura"):
         raise HTTPException(400, "Categoria inválida")
     if "metodo_pg" in dados and dados["metodo_pg"] not in ("cartao", "dinheiro", "pix", "debito"):
         raise HTTPException(400, "Método PG inválido")
     if "cartao" in dados and dados["cartao"] not in CARTOES:
         raise HTTPException(400, "Cartão inválido")
-    for k in ("grupo", "categoria", "cartao", "conta", "sub_conta", "metodo_pg", "descricao", "credor_pagador", "data_compra"):
+    if dados.get("responsavel") and dados["responsavel"] not in RESPONSAVEIS:
+        raise HTTPException(400, "Responsável inválido")
+    for k in ("grupo", "categoria", "cartao", "conta", "sub_conta", "responsavel", "metodo_pg", "descricao", "credor_pagador", "data_compra"):
         if k in dados: setattr(l, k, dados[k])
     db.commit(); db.refresh(l)
     return l
