@@ -6189,7 +6189,12 @@ window.abrirBebidaModal=function(beb, mode){
 (function(){
   if(!document.getElementById('css-op-precificacao')){
     var sp=document.createElement('style'); sp.id='css-op-precificacao';
-    sp.textContent='#page-operacoes-precificacao .page-content{max-width:none;margin:0;padding:12px 16px}';
+    sp.textContent='#page-operacoes-precificacao .page-content{max-width:none;margin:0;padding:12px 16px}'
+      +'#pf-modal > div,#pf-produto-pop > div{background:#DFE5E6 !important}'
+      +'#pf-modal input:not([type=checkbox]):not([type=radio]),#pf-modal select,#pf-modal textarea,#pf-produto-pop input:not([type=checkbox]):not([type=radio]),#pf-produto-pop select,#pf-produto-pop textarea{background:#fff;border:1px solid #0C2340}'
+      +'#pf-modal .form-label,#pf-produto-pop .form-label{color:#0C2340;font-weight:600}'
+      +'#pf-modal hr{border-top:1px solid #0C2340 !important}'
+      +'#pf-modal .tabela-contatos th,#pf-modal .tabela-contatos td{border-color:#0C2340}';
     document.head.appendChild(sp);
   }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
