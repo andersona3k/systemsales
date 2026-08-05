@@ -6189,12 +6189,7 @@ window.abrirBebidaModal=function(beb, mode){
 (function(){
   if(!document.getElementById('css-op-precificacao')){
     var sp=document.createElement('style'); sp.id='css-op-precificacao';
-    sp.textContent='#page-operacoes-precificacao .page-content{max-width:none;margin:0;padding:12px 16px}'
-      +'#pf-modal > div,#pf-produto-pop > div{background:#DFE5E6 !important}'
-      +'#pf-modal input:not([type=checkbox]):not([type=radio]),#pf-modal select,#pf-modal textarea,#pf-produto-pop input:not([type=checkbox]):not([type=radio]),#pf-produto-pop select,#pf-produto-pop textarea{background:#fff;border:1px solid #0C2340}'
-      +'#pf-modal .form-label,#pf-produto-pop .form-label{color:#0C2340;font-weight:600}'
-      +'#pf-modal hr{border-top:1px solid #0C2340 !important}'
-      +'#pf-modal .tabela-contatos th,#pf-modal .tabela-contatos td{border-color:#0C2340}';
+    sp.textContent='#page-operacoes-precificacao .page-content{max-width:none;margin:0;padding:12px 16px}';
     document.head.appendChild(sp);
   }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -6306,7 +6301,7 @@ window.abrirBebidaModal=function(beb, mode){
       box.innerHTML='<div style="overflow-x:auto">'+table+'</div>';
     }
     function render(){
-      ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:1320px;width:100%;max-height:92vh;display:flex;flex-direction:column">'
+      ov.innerHTML='<div class="tema-form" style="background:#fff;border-radius:12px;max-width:1320px;width:100%;max-height:92vh;display:flex;flex-direction:column">'
         +'<div style="flex-shrink:0;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">'+(state.id?'Editar':'Novo')+' evento de precificação</h3><div style="display:flex;align-items:center;gap:8px">'
           +'<button class="btn btn-sm btn-secondary" data-x="salvar" title="Salvar" style="padding:6px 10px">💾</button>'
           +'<button class="btn btn-sm" data-x="close" title="Fechar" style="background:transparent;border:none;color:var(--danger);font-weight:700;font-size:16px;line-height:1;padding:6px 8px">✕</button>'
@@ -6351,7 +6346,7 @@ window.abrirBebidaModal=function(beb, mode){
         var fotoHtml=p.foto_url
           ? '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><a href="'+esc(p.foto_url)+'" target="_blank" style="color:var(--primary)">📷 Ver foto</a><button class="btn btn-sm btn-secondary" data-pop="del-foto" style="color:var(--danger);padding:2px 6px">×</button></div>'
           : '<div class="text-sm text-muted" style="margin-bottom:6px">Nenhuma foto</div>';
-        pop.innerHTML='<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;padding:18px">'
+        pop.innerHTML='<div class="tema-form" style="background:#fff;border-radius:12px;max-width:380px;width:100%;padding:18px">'
           +'<h4 style="margin:0 0 10px">Editar produto'+(p.pn?(' — '+esc(p.pn)):'')+'</h4>'
           +'<div class="form-group"><label class="form-label">% Margem (em branco = usar padrão de '+margemPadraoAtual()+'%)</label><input id="pf-pop-margem" type="number" step="0.01" class="form-control" value="'+(p.margem_pct!=null?p.margem_pct:'')+'" placeholder="'+margemPadraoAtual()+'"></div>'
           +'<label class="form-label">Foto</label>'+fotoHtml
@@ -10211,3 +10206,77 @@ window.abrirBebidaModal=function(beb, mode){
 })();
 
 
+
+/* ===== TEMA: cores de formulário (Configurações) — classe .tema-form por módulo ===== */
+(function(){
+  var DEF={form_bg:'#DFE5E6',form_border:'#0C2340',form_field:'#FFFFFF'};
+  function aplicarTema(t){
+    t=t||{};
+    var bg=t.form_bg||DEF.form_bg, bd=t.form_border||DEF.form_border, fl=t.form_field||DEF.form_field;
+    var r=document.documentElement.style;
+    r.setProperty('--tema-form-bg',bg); r.setProperty('--tema-form-border',bd); r.setProperty('--tema-form-field',fl);
+    var css=document.getElementById('tema-css');
+    if(!css){ css=document.createElement('style'); css.id='tema-css'; document.head.appendChild(css); }
+    css.textContent='.tema-form{background:var(--tema-form-bg)!important}'
+      +'.tema-form .form-control,.tema-form input:not([type=checkbox]):not([type=radio]):not([type=color]),.tema-form select,.tema-form textarea{background:var(--tema-form-field)!important;border:1px solid var(--tema-form-border)!important}'
+      +'.tema-form .form-label{color:var(--tema-form-border)!important}'
+      +'.tema-form hr{border-top:1px solid var(--tema-form-border)!important;border-bottom:none!important}'
+      +'.tema-form table th,.tema-form table td{border-color:var(--tema-form-border)!important}';
+  }
+  window.aplicarTema=aplicarTema;
+  window._temaAtual={};
+  aplicarTema(DEF); // aplica padrão já (mantém CSS vars válidas)
+  async function carregarTema(){
+    try{ var c=await _authFetch('GET','/configuracoes/tema'); window._temaAtual=(c&&c.valor)||{}; aplicarTema(window._temaAtual); }catch(e){}
+  }
+  if(typeof _authFetch==='function') setTimeout(carregarTema,300);
+
+  function val(id){ var el=document.getElementById(id); return el?el.value:''; }
+  function readTema(){ return {form_bg:val('tema-bg')||DEF.form_bg, form_border:val('tema-border')||DEF.form_border, form_field:val('tema-field')||DEF.form_field}; }
+
+  function montarTemaConfig(){
+    var pc=document.querySelector('#page-configuracoes .page-content'); if(!pc) return;
+    if(document.getElementById('tema-config-card')) return;
+    var t={form_bg:DEF.form_bg,form_border:DEF.form_border,form_field:DEF.form_field};
+    var s=window._temaAtual||{}; if(s.form_bg)t.form_bg=s.form_bg; if(s.form_border)t.form_border=s.form_border; if(s.form_field)t.form_field=s.form_field;
+    var card=document.createElement('div'); card.className='card mb-4'; card.id='tema-config-card';
+    card.innerHTML='<div class="card-body">'
+      +'<p class="section-title">Tema de Formulários</p>'
+      +'<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">'
+        +'<div style="min-width:230px">'
+          +'<label class="form-label" style="display:block;margin-bottom:2px">Fundo do formulário</label><input type="color" id="tema-bg" value="'+t.form_bg+'" style="width:56px;height:32px;vertical-align:middle;padding:0;border:1px solid #ccc;border-radius:6px"> <span id="tema-bg-hex" class="text-sm text-muted">'+t.form_bg+'</span>'
+          +'<label class="form-label" style="display:block;margin:12px 0 2px">Borda / linhas</label><input type="color" id="tema-border" value="'+t.form_border+'" style="width:56px;height:32px;vertical-align:middle;padding:0;border:1px solid #ccc;border-radius:6px"> <span id="tema-border-hex" class="text-sm text-muted">'+t.form_border+'</span>'
+          +'<label class="form-label" style="display:block;margin:12px 0 2px">Preenchimento do campo</label><input type="color" id="tema-field" value="'+t.form_field+'" style="width:56px;height:32px;vertical-align:middle;padding:0;border:1px solid #ccc;border-radius:6px"> <span id="tema-field-hex" class="text-sm text-muted">'+t.form_field+'</span>'
+          +'<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-sm btn-primary" data-tema="salvar">💾 Salvar</button><button class="btn btn-sm btn-secondary" data-tema="reset">Restaurar padrão</button></div>'
+          +'<p class="text-sm text-muted" style="margin-top:8px">As cores aplicam <b>ao vivo</b> enquanto você escolhe. "Salvar" grava e mantém. (Aplicado por ora na Precificação; estenderemos a cada módulo.)</p>'
+        +'</div>'
+        +'<div style="flex:1;min-width:250px"><label class="form-label" style="display:block;margin-bottom:6px">Prévia</label>'
+          +'<div class="tema-form" style="border-radius:10px;padding:14px;border:1px solid var(--tema-form-border)">'
+            +'<div class="form-group"><label class="form-label">Campo de exemplo</label><input class="form-control" value="Texto de exemplo"></div>'
+            +'<hr style="margin:10px 0">'
+            +'<div class="form-group" style="margin-bottom:0"><label class="form-label">Seleção</label><select class="form-control"><option>Opção 1</option><option>Opção 2</option></select></div>'
+          +'</div>'
+        +'</div>'
+      +'</div></div>';
+    pc.appendChild(card);
+  }
+  window.montarTemaConfig=montarTemaConfig;
+
+  if(!window._temaBound){
+    window._temaBound=true;
+    document.addEventListener('click', function(e){
+      if(e.target.closest && e.target.closest('[data-page="configuracoes"]')){ setTimeout(montarTemaConfig,150); setTimeout(montarTemaConfig,500); }
+      var b=e.target.closest && e.target.closest('#tema-config-card [data-tema]');
+      if(b){ var act=b.getAttribute('data-tema');
+        if(act==='salvar'){ var t=readTema(); _authFetch('PUT','/configuracoes/tema',{chave:'tema',valor:t}).then(function(){ window._temaAtual=t; aplicarTema(t); if(typeof toast==='function') toast('Tema salvo','success'); }).catch(function(){ if(typeof toast==='function') toast('Erro ao salvar','error'); }); return; }
+        if(act==='reset'){ ['bg','border','field'].forEach(function(k){ var i=document.getElementById('tema-'+k); var h=document.getElementById('tema-'+k+'-hex'); var dv=DEF['form_'+(k==='bg'?'bg':(k==='border'?'border':'field'))]; if(i)i.value=dv; if(h)h.textContent=dv; }); aplicarTema(DEF); return; } }
+    });
+    document.addEventListener('input', function(e){
+      if(e.target && e.target.type==='color' && e.target.closest && e.target.closest('#tema-config-card')){
+        var hex=document.getElementById(e.target.id+'-hex'); if(hex) hex.textContent=e.target.value;
+        aplicarTema(readTema());
+      }
+    });
+    if(document.querySelector('#page-configuracoes.active')) setTimeout(montarTemaConfig,150);
+  }
+})();
