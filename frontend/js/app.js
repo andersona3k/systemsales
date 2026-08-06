@@ -10281,41 +10281,37 @@ window.abrirBebidaModal=function(beb, mode){
   }
 })();
 
-/* ===== COMERCIAL: hub Vendas (Vendas+Forecast+Comissão unificados) com menu hambúrguer ===== */
+/* ===== COMERCIAL: hub Vendas (Vendas+Comissão+Forecast unificados) — barra fixa de botões ===== */
 (function(){
-  var SUBS=[['vendas','💰 Vendas'],['forecast','📈 Forecast'],['comissao','🧮 Comissão']];
+  var SUBS=[['vendas','💰 Vendas'],['comissao','🧮 Comissão'],['forecast','📈 Forecast']];
 
   var css=document.createElement('style'); css.id='css-vh';
   css.textContent=''
-    +'.vh-ham{order:-1;border:none;background:var(--surface-2);width:34px;height:34px;min-width:34px;border-radius:8px;font-size:18px;line-height:1;cursor:pointer;color:var(--text)}'
-    +'.vh-ham:hover{background:var(--border)}'
-    +'.vh-drop{position:absolute;top:calc(var(--header-height) - 4px);left:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);min-width:200px;z-index:150;overflow:hidden;display:none}'
-    +'.vh-drop.open{display:block}'
-    +'.vh-drop button{display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;cursor:pointer;color:var(--text)}'
-    +'.vh-drop button:hover{background:var(--surface-2)}'
-    +'.vh-drop button.on{font-weight:700;color:var(--primary);background:var(--surface-2)}';
+    +'.vh-bar{order:-1;display:flex;gap:6px;flex:1}'
+    +'.vh-bar button{flex:1;border:2px solid transparent;background:var(--surface-2);border-radius:8px;padding:8px 6px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);white-space:nowrap}'
+    +'.vh-bar button:hover{background:var(--border)}'
+    +'.vh-bar button.on{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}';
   document.head.appendChild(css);
 
-  function dropHtml(activeId){
+  function barHtml(activeId){
     return SUBS.map(function(s){ return '<button type="button" data-vh="'+s[0]+'" class="'+(s[0]===activeId?'on':'')+'">'+s[1]+'</button>'; }).join('');
   }
 
   function montarHeader(pageId){
     var pg=document.getElementById('page-'+pageId); if(!pg) return;
-    var head=pg.querySelector('.app-header'); if(!head || head.querySelector('.vh-ham')) return;
-    head.style.position='relative';
-    var btn=document.createElement('button'); btn.type='button'; btn.className='vh-ham'; btn.title='Menu de Vendas'; btn.textContent='☰';
-    head.insertBefore(btn, head.firstChild);
-    var drop=document.createElement('div'); drop.className='vh-drop'; drop.innerHTML=dropHtml(pageId);
-    head.appendChild(drop);
+    var head=pg.querySelector('.app-header'); if(!head) return;
+    var h2=head.querySelector('h2'); if(h2) h2.style.display='none';
+    var bar=head.querySelector('.vh-bar');
+    if(!bar){ bar=document.createElement('div'); bar.className='vh-bar'; head.insertBefore(bar, head.firstChild); }
+    bar.innerHTML=barHtml(pageId);
   }
 
   function irPara(id){
-    document.querySelectorAll('.vh-drop').forEach(function(d){ d.classList.remove('open'); d.innerHTML=dropHtml(id); });
     if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); }
     else if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); }
     else if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); }
     var navVendas=document.querySelector('.desktop-nav-item[data-page="vendas"]'); if(navVendas) navVendas.classList.add('active');
+    document.querySelectorAll('.vh-bar').forEach(function(b){ b.innerHTML=barHtml(id); });
   }
 
   function ensure(){ SUBS.forEach(function(s){ montarHeader(s[0]); }); }
@@ -10323,16 +10319,7 @@ window.abrirBebidaModal=function(beb, mode){
   [300,1000,2500].forEach(function(ms){ setTimeout(ensure, ms); });
 
   document.addEventListener('click', function(e){
-    var ham=e.target.closest && e.target.closest('.vh-ham');
-    if(ham){
-      var head=ham.closest('.app-header'); var d=head&&head.querySelector('.vh-drop');
-      var wasOpen=d&&d.classList.contains('open');
-      document.querySelectorAll('.vh-drop').forEach(function(x){ x.classList.remove('open'); });
-      if(d && !wasOpen) d.classList.add('open');
-      return;
-    }
-    var it=e.target.closest && e.target.closest('.vh-drop [data-vh]');
+    var it=e.target.closest && e.target.closest('.vh-bar [data-vh]');
     if(it){ irPara(it.getAttribute('data-vh')); return; }
-    if(!e.target.closest('.vh-drop')){ document.querySelectorAll('.vh-drop').forEach(function(x){ x.classList.remove('open'); }); }
   });
 })();
