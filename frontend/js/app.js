@@ -70,8 +70,18 @@ document.getElementById('form-login')?.addEventListener('submit', async (e) => {
 
 function mostrarApp() {
   document.getElementById('page-login').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  navegarPara('dashboard');
+  var alvo = localStorage.getItem('sgc_pagina_atual');
+  var idDom = (alvo && alvo.indexOf('rede:') === 0) ? 'publicacoes' : alvo;
+  var elAlvo = idDom && document.getElementById('page-' + idDom);
+  if (elAlvo) {
+    document.querySelectorAll('.page.active').forEach(function(p){ p.classList.remove('active'); });
+    elAlvo.classList.add('active');
+    document.getElementById('app').style.display = 'block';
+    if (typeof restaurarPaginaAtual === 'function') restaurarPaginaAtual(alvo);
+  } else {
+    document.getElementById('app').style.display = 'block';
+    navegarPara('dashboard');
+  }
 }
 
 function logout() { api.clearToken(); location.reload(); }
@@ -10324,19 +10334,21 @@ window.abrirBebidaModal=function(beb, mode){
   });
 })();
 
-/* ===== Persistência de página: F5/recarregar mantém a página atual em vez de voltar ao Início ===== */
+/* ===== Persistência de página: F5/recarregar mantém a página atual, sem piscar o Início =====
+   mostrarApp() já deixa a página certa .active ANTES de exibir #app (sem flash); aqui só:
+   1) guardamos qual foi o último item clicado, e
+   2) refazemos esse clique (com retentativas) pra carregar os dados e destacar o menu certo. */
 (function(){
   var CHAVE='sgc_pagina_atual';
 
   document.addEventListener('click', function(e){
     var b=e.target.closest && (e.target.closest('.desktop-nav-item[data-page]')||e.target.closest('.tab-item[data-page]'));
-    if(b){ localStorage.setItem(CHAVE, b.getAttribute('data-page')); return; }
+    if(b){ var id=b.getAttribute('data-page'); if(id && id!=='cadastro') localStorage.setItem(CHAVE, id); return; }
     var vh=e.target.closest && e.target.closest('.vh-bar [data-vh]');
     if(vh){ localStorage.setItem(CHAVE, vh.getAttribute('data-vh')); }
   });
 
-  function restaurar(){
-    var alvo=localStorage.getItem(CHAVE);
+  window.restaurarPaginaAtual=function(alvo){
     if(!alvo || alvo==='dashboard') return;
     var tentativas=0;
     (function tick(){
@@ -10346,14 +10358,8 @@ window.abrirBebidaModal=function(beb, mode){
       var vh=document.querySelector('.vh-bar [data-vh="'+alvo+'"]');
       if(vh){ vh.click(); return; }
       if(tentativas<15){ setTimeout(tick,300); return; }
-      if(document.getElementById('page-'+alvo) && typeof navegarPara==='function') navegarPara(alvo);
     })();
-  }
-
-  if(typeof mostrarApp==='function'){
-    var _mostrarAppPrev2=mostrarApp;
-    mostrarApp=function(){ var r=_mostrarAppPrev2.apply(this,arguments); setTimeout(restaurar,250); return r; };
-  }
+  };
 
   if(typeof logout==='function'){
     var _logoutPrev=logout;
