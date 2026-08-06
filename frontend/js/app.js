@@ -7696,10 +7696,10 @@ window.abrirBebidaModal=function(beb, mode){
       {g:'ADMIN', it:[['configuracoes','Configurações','⚙️'],['usuarios','Usuários','👤']]},
       {g:'ANDERSON', it:[['qrcode','Meu QR Code','🔳'],['acessos','Acessos','🔑'],['links','Links','🔗'],['fotos','Fotos','🖼️'],['bebidas','Catálogo de Cervejas','🍺']]},
       {g:'CardBase', it:[['cadastro','Cadastro','➕'],['empresas','Empresas','🏢'],['contatos','Contatos','👥'],['dashboard','Dashboard','📊']]},
-      {g:'FINANCEIRO', it:[['vendas','Vendas','💰'],['forecast','Forcast','📈'],['comissao','Comissão','🧮'],['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
+      {g:'FINANCEIRO', it:[['financas-empresa','Controle financeiro','🏦'],['financas-pessoais','Compras','💳'],['analise-financeira','Análise financeira','📊']]},
       {g:'OPERAÇÕES', it:[['operacoes-link','Link','🔗'],['operacoes-calculadora','Calculadora','🧮'],['operacoes-bom','BOM','📋'],['operacoes-precificacao','Precificação','💲'],['operacoes-produtos','Produtos','📦']]},
       {g:'PROSPECÇÃO', it:[['prosp-dash','Dashboard','📊'],['prospeccao-empresas','Empresas','🏢'],['prospeccao-contatos','Contatos','👤'],['prospeccao-listas','Listas','📋'],['prospeccao-kanban','Kanban','🗂️'],['crm-registros','CRM','📇'],['felicitacoes','Mensagem','💬']]},
-      {g:'COMERCIAL', it:[['funil','Funil','🔻'],['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦'],['prop-config','Configurações','⚙️']]},
+      {g:'COMERCIAL', it:[['funil','Funil','🔻'],['vendas','Vendas','💰'],['propostas','Propostas','📄'],['prop-modelos','Modelos','🧩'],['prop-produtos','Produtos','📦'],['prop-config','Configurações','⚙️']]},
       social
     ];
     var html='<span class="nav-v9" style="display:none"></span><div class="desktop-nav-logo">📇 SGC</div><div style="font-size:10px;color:var(--text-muted);padding:0 12px 8px;margin-top:-4px">Sistema de Gestão Comercial</div>';
@@ -10279,4 +10279,60 @@ window.abrirBebidaModal=function(beb, mode){
     });
     if(document.querySelector('#page-configuracoes.active')) setTimeout(montarTemaConfig,150);
   }
+})();
+
+/* ===== COMERCIAL: hub Vendas (Vendas+Forecast+Comissão unificados) com menu hambúrguer ===== */
+(function(){
+  var SUBS=[['vendas','💰 Vendas'],['forecast','📈 Forecast'],['comissao','🧮 Comissão']];
+
+  var css=document.createElement('style'); css.id='css-vh';
+  css.textContent=''
+    +'.vh-ham{order:-1;border:none;background:var(--surface-2);width:34px;height:34px;min-width:34px;border-radius:8px;font-size:18px;line-height:1;cursor:pointer;color:var(--text)}'
+    +'.vh-ham:hover{background:var(--border)}'
+    +'.vh-drop{position:absolute;top:calc(var(--header-height) - 4px);left:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);min-width:200px;z-index:150;overflow:hidden;display:none}'
+    +'.vh-drop.open{display:block}'
+    +'.vh-drop button{display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;cursor:pointer;color:var(--text)}'
+    +'.vh-drop button:hover{background:var(--surface-2)}'
+    +'.vh-drop button.on{font-weight:700;color:var(--primary);background:var(--surface-2)}';
+  document.head.appendChild(css);
+
+  function dropHtml(activeId){
+    return SUBS.map(function(s){ return '<button type="button" data-vh="'+s[0]+'" class="'+(s[0]===activeId?'on':'')+'">'+s[1]+'</button>'; }).join('');
+  }
+
+  function montarHeader(pageId){
+    var pg=document.getElementById('page-'+pageId); if(!pg) return;
+    var head=pg.querySelector('.app-header'); if(!head || head.querySelector('.vh-ham')) return;
+    head.style.position='relative';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='vh-ham'; btn.title='Menu de Vendas'; btn.textContent='☰';
+    head.insertBefore(btn, head.firstChild);
+    var drop=document.createElement('div'); drop.className='vh-drop'; drop.innerHTML=dropHtml(pageId);
+    head.appendChild(drop);
+  }
+
+  function irPara(id){
+    document.querySelectorAll('.vh-drop').forEach(function(d){ d.classList.remove('open'); d.innerHTML=dropHtml(id); });
+    if(id==='vendas'){ navegarPara('vendas'); if(typeof carregarVendas==='function') carregarVendas(); }
+    else if(id==='forecast'){ navegarPara('forecast'); if(typeof carregarForecast==='function') carregarForecast(); }
+    else if(id==='comissao'){ navegarPara('comissao'); if(typeof carregarComissao==='function') carregarComissao(); }
+    var navVendas=document.querySelector('.desktop-nav-item[data-page="vendas"]'); if(navVendas) navVendas.classList.add('active');
+  }
+
+  function ensure(){ SUBS.forEach(function(s){ montarHeader(s[0]); }); }
+  ensure();
+  [300,1000,2500].forEach(function(ms){ setTimeout(ensure, ms); });
+
+  document.addEventListener('click', function(e){
+    var ham=e.target.closest && e.target.closest('.vh-ham');
+    if(ham){
+      var head=ham.closest('.app-header'); var d=head&&head.querySelector('.vh-drop');
+      var wasOpen=d&&d.classList.contains('open');
+      document.querySelectorAll('.vh-drop').forEach(function(x){ x.classList.remove('open'); });
+      if(d && !wasOpen) d.classList.add('open');
+      return;
+    }
+    var it=e.target.closest && e.target.closest('.vh-drop [data-vh]');
+    if(it){ irPara(it.getAttribute('data-vh')); return; }
+    if(!e.target.closest('.vh-drop')){ document.querySelectorAll('.vh-drop').forEach(function(x){ x.classList.remove('open'); }); }
+  });
 })();
