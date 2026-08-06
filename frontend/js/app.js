@@ -10323,3 +10323,40 @@ window.abrirBebidaModal=function(beb, mode){
     if(it){ irPara(it.getAttribute('data-vh')); return; }
   });
 })();
+
+/* ===== Persistência de página: F5/recarregar mantém a página atual em vez de voltar ao Início ===== */
+(function(){
+  var CHAVE='sgc_pagina_atual';
+
+  document.addEventListener('click', function(e){
+    var b=e.target.closest && (e.target.closest('.desktop-nav-item[data-page]')||e.target.closest('.tab-item[data-page]'));
+    if(b){ localStorage.setItem(CHAVE, b.getAttribute('data-page')); return; }
+    var vh=e.target.closest && e.target.closest('.vh-bar [data-vh]');
+    if(vh){ localStorage.setItem(CHAVE, vh.getAttribute('data-vh')); }
+  });
+
+  function restaurar(){
+    var alvo=localStorage.getItem(CHAVE);
+    if(!alvo || alvo==='dashboard') return;
+    var tentativas=0;
+    (function tick(){
+      tentativas++;
+      var btn=document.querySelector('.desktop-nav-item[data-page="'+alvo+'"]') || document.querySelector('.tab-item[data-page="'+alvo+'"]');
+      if(btn){ btn.click(); return; }
+      var vh=document.querySelector('.vh-bar [data-vh="'+alvo+'"]');
+      if(vh){ vh.click(); return; }
+      if(tentativas<15){ setTimeout(tick,300); return; }
+      if(document.getElementById('page-'+alvo) && typeof navegarPara==='function') navegarPara(alvo);
+    })();
+  }
+
+  if(typeof mostrarApp==='function'){
+    var _mostrarAppPrev2=mostrarApp;
+    mostrarApp=function(){ var r=_mostrarAppPrev2.apply(this,arguments); setTimeout(restaurar,250); return r; };
+  }
+
+  if(typeof logout==='function'){
+    var _logoutPrev=logout;
+    logout=function(){ localStorage.removeItem(CHAVE); return _logoutPrev.apply(this,arguments); };
+  }
+})();
