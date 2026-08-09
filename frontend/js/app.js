@@ -1722,6 +1722,16 @@ async function _baixarArquivo(path, filename){
     setTimeout(function(){URL.revokeObjectURL(url);},1000);
   }catch(err){ toast(err.message,'error'); }
 }
+async function _baixarArquivoPost(path, filename, body){
+  try{
+    var r=await fetch('/api'+path, {method:'POST', headers:{'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!r.ok){ var d=await r.json().catch(function(){return null;}); toast((d&&d.detail)||'Erro ao exportar','error'); return; }
+    var blob=await r.blob();
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }catch(err){ toast(err.message,'error'); }
+}
 async function _importarArquivo(path, file){
   var fd=new FormData(); fd.append('arquivo', file);
   var r=await fetch('/api'+path, {method:'POST', headers:{'Authorization':'Bearer '+getToken()}, body:fd});
@@ -8845,7 +8855,7 @@ window.abrirBebidaModal=function(beb, mode){
     var toolbar='<div style="margin-bottom:12px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b class="text-sm" style="display:inline-block;min-width:80px">Tipo conta:</b>'+chipGrupo('','Todos')+chipGrupo('pessoal','👤 Pessoal')+chipGrupo('empresa','🏢 Empresa')+'</div>'
-        +'<button class="btn btn-primary btn-sm" data-feact="novo">＋ Novo lançamento</button>'
+        +'<div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" data-feact="exportar">📥 Exportar Excel</button><button class="btn btn-primary btn-sm" data-feact="novo">＋ Novo lançamento</button></div>'
       +'</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b class="text-sm" style="display:inline-block;min-width:80px">Categoria:</b>'+chipCat('','Todos')+chipCat('despesa','Despesas')+chipCat('divida','Dívidas')+chipCat('receita','Receitas')+chipCat('investimento','Investimentos')+'</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b class="text-sm" style="display:inline-block;min-width:80px">Período:</b>'+chipMes('todos','Todos')+chipMes('atual','Mês atual')
@@ -8885,6 +8895,7 @@ window.abrirBebidaModal=function(beb, mode){
     var farol='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+cardStatus('','Todos')+cardStatus('planejado','Planejado')+cardStatus('atrasado','Atrasado')+cardStatus('pago','Pago')+'</div>';
     if(_feStatus) filtr=filtr.filter(function(x){return _feStatus==='planejado'?(x.status==='planejado'||x.status==='vencendo'):x.status===_feStatus;});
     filtr=filtr.slice().sort(function(a,b){return (a.vencimento||'').localeCompare(b.vencimento||'');});
+    window._feFiltrada=filtr;
     var rows=filtr.map(function(p){
       var parc=(p.total_parcelas&&p.total_parcelas>1)?(p.numero+'/'+p.total_parcelas):'—';
       var bg=stColor(p.status);
@@ -9179,6 +9190,24 @@ window.abrirBebidaModal=function(beb, mode){
         if(act==='detalhe'){ var pd=(window._finEmpresa||[]).filter(function(x){return x.id===id;})[0]; if(pd) abrirFinDetalheModal(pd); return; }
         if(act==='excluir-parcela'){ if(confirm('Excluir esta parcela?')){ _authFetch('DELETE','/fin/financas-empresa/parcelas/'+id).then(carregarFinancasEmpresa).catch(function(err){toast(err.message,'error');}); } return; }
         if(act==='limpar-filtros'){ _feGrupo=''; _feCat=''; _feConta=''; _feCredor=''; _feDescricao=''; _feStatus=''; _feMesModo='todos'; _feMesEscolha=''; _feResp=''; renderFinancasEmpresa(); return; }
+        if(act==='exportar'){
+          var linhasFe=(window._feFiltrada||[]).map(function(p){
+            var vf=(p.valor_final!=null?p.valor_final:p.valor);
+            return {
+              grupo:(p.grupo?(GRUPO_LABEL[p.grupo]||p.grupo):''), categoria:(p.categoria?(CAT_LABEL[p.categoria]||p.categoria):''),
+              responsavel:p.responsavel||'', conta:p.conta||'', descricao:p.descricao||'', credor_pagador:p.credor_pagador||'',
+              metodo:(MET_LABEL[p.metodo]||p.metodo||''), modo_pagamento:(p.modo_pagamento?(MODO_LABEL[p.modo_pagamento]||p.modo_pagamento):''),
+              parcela:(p.total_parcelas&&p.total_parcelas>1)?(p.numero+'/'+p.total_parcelas):'',
+              vencimento:fmtData(p.vencimento), valor:p.valor, valor_final:vf, status:(STATUS_LABEL[p.status]||p.status||'')
+            };
+          });
+          var colunasFe=[{chave:'grupo',label:'Tipo conta'},{chave:'categoria',label:'Categoria'},{chave:'responsavel',label:'Responsável'},
+            {chave:'conta',label:'Conta'},{chave:'descricao',label:'Descrição'},{chave:'credor_pagador',label:'Credor/Pagador'},
+            {chave:'metodo',label:'Pagamento'},{chave:'modo_pagamento',label:'Modo Pagamento'},{chave:'parcela',label:'Parcela'},
+            {chave:'vencimento',label:'Vencimento'},{chave:'valor',label:'Valor'},{chave:'valor_final',label:'Valor Final'},{chave:'status',label:'Status'}];
+          _baixarArquivoPost('/fin/exportar-xlsx','controle_financeiro.xlsx',{linhas:linhasFe,colunas:colunasFe,arquivo:'controle_financeiro.xlsx'});
+          return;
+        }
       }
     });
     document.addEventListener('change', function(e){
@@ -9281,7 +9310,7 @@ window.abrirBebidaModal=function(beb, mode){
     var toolbar='<div style="margin-bottom:12px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+chipGrupo('','Todos')+chipGrupo('pessoal','Pessoal')+chipGrupo('empresa','Empresa')+'</div>'
-        +'<button class="btn btn-primary btn-sm" data-ccact="novo">＋ Nova compra</button>'
+        +'<div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" data-ccact="exportar">📥 Exportar Excel</button><button class="btn btn-primary btn-sm" data-ccact="novo">＋ Nova compra</button></div>'
       +'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+chipCat('','Todos')+chipCat('despesa','Despesas')+chipCat('consumo','Consumo')+chipCat('assinatura','Assinatura')+'</div>'
       +'<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
@@ -9302,6 +9331,7 @@ window.abrirBebidaModal=function(beb, mode){
     if(_ccConta) filtr=filtr.filter(function(x){return x.conta===_ccConta;});
     if(_ccResp) filtr=filtr.filter(function(x){return x.responsavel===_ccResp;});
     filtr=filtr.slice().sort(function(a,b){return (a.data_compra||'').localeCompare(b.data_compra||'');});
+    window._ccFiltrada=filtr;
     var rows=filtr.map(function(p){
       var parc=(p.total_parcelas&&p.total_parcelas>1)?(p.numero+'/'+p.total_parcelas):'—';
       return '<tr>'
@@ -9623,6 +9653,23 @@ window.abrirBebidaModal=function(beb, mode){
         if(act==='editar'){ var p=(window._ccLista||[]).filter(function(x){return x.id===id;})[0]; if(p) abrirCcEditModal(p); return; }
         if(act==='detalhe'){ var pd=(window._ccLista||[]).filter(function(x){return x.id===id;})[0]; if(pd) abrirCcDetalheModal(pd); return; }
         if(act==='excluir-parcela'){ if(confirm('Excluir esta parcela?')){ _authFetch('DELETE','/fin/financas-cartao/parcelas/'+id).then(carregarFinancasCartao).catch(function(err){toast(err.message,'error');}); } return; }
+        if(act==='exportar'){
+          var linhasCc=(window._ccFiltrada||[]).map(function(p){
+            var parc=(p.total_parcelas&&p.total_parcelas>1)?(p.numero+'/'+p.total_parcelas):'';
+            return {
+              grupo:(p.grupo?(GRUPO_LABEL[p.grupo]||p.grupo):''), categoria:(p.categoria?(CAT_LABEL[p.categoria]||p.categoria):''),
+              responsavel:p.responsavel||'', cartao:(CARTAO_LABEL[p.cartao]||p.cartao||''), metodo:(MET_LABEL[p.metodo]||p.metodo||''),
+              parcela:parc, conta:p.conta||'', sub_conta:p.sub_conta||'', descricao:p.descricao||'', credor_pagador:p.credor_pagador||'',
+              data_compra:fmtData(p.data_compra), valor:p.valor, vencimento_fatura:fmtData(p.vencimento_fatura)
+            };
+          });
+          var colunasCc=[{chave:'grupo',label:'Tipo conta'},{chave:'categoria',label:'Categoria'},{chave:'responsavel',label:'Responsável'},
+            {chave:'cartao',label:'Meio PG'},{chave:'metodo',label:'Forma PG'},{chave:'parcela',label:'Parcela'},{chave:'conta',label:'Conta'},
+            {chave:'sub_conta',label:'Sub Conta'},{chave:'descricao',label:'Descrição'},{chave:'credor_pagador',label:'Credor/Pagador'},
+            {chave:'data_compra',label:'Compra'},{chave:'valor',label:'Valor'},{chave:'vencimento_fatura',label:'Vencimento Fatura'}];
+          _baixarArquivoPost('/fin/exportar-xlsx','compras.xlsx',{linhas:linhasCc,colunas:colunasCc,arquivo:'compras.xlsx'});
+          return;
+        }
       }
     });
     document.addEventListener('change', function(e){

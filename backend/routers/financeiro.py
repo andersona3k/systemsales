@@ -1,8 +1,12 @@
 import calendar
+import io
 from datetime import date, timedelta
 from typing import List
 from uuid import UUID
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
 from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File
+from fastapi.responses import Response
 from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -177,6 +181,40 @@ def _parcela_out(p: FinParcela) -> dict:
         "credor_pagador": l.credor_pagador if l else None,
         "total_parcelas": len(l.parcelas) if l else None,
     }
+
+
+@router.post("/exportar-xlsx")
+def exportar_xlsx_generico(dados: dict = Body(...), _=Depends(get_current_user)):
+    """Gera um xlsx a partir de linhas/colunas já filtradas no cliente (reutilizável por qualquer tela)."""
+    linhas = dados.get("linhas") or []
+    colunas = dados.get("colunas") or []
+    arquivo = dados.get("arquivo") or "exportacao.xlsx"
+    if not arquivo.endswith(".xlsx"):
+        arquivo += ".xlsx"
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+    font = Font(color="FFFFFF", bold=True)
+    for col, c in enumerate(colunas, 1):
+        cel = ws.cell(row=1, column=col, value=c.get("label") or c.get("chave") or "")
+        cel.fill = fill
+        cel.font = font
+        cel.alignment = Alignment(horizontal="center")
+    for row, linha in enumerate(linhas, 2):
+        for col, c in enumerate(colunas, 1):
+            ws.cell(row=row, column=col, value=linha.get(c.get("chave")))
+    for col in ws.columns:
+        largura = max((len(str(cel.value or "")) for cel in col), default=0)
+        ws.column_dimensions[col[0].column_letter].width = min(largura + 4, 50)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={arquivo}"},
+    )
 
 
 @router.get("/financas-empresa", response_model=List[FinParcelaOut])
