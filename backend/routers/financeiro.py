@@ -237,7 +237,7 @@ def listar_financas_empresa(grupo: str | None = None, categoria: str | None = No
 def criar_financa_empresa(dados: FinLancamentoIn, db: Session = Depends(get_db), _=Depends(get_current_user)):
     if dados.grupo not in ("pessoal", "empresa"):
         raise HTTPException(400, "Grupo inválido")
-    if dados.categoria not in ("despesa", "divida", "receita", "investimento"):
+    if dados.categoria not in ("despesa", "divida", "receita", "investimento", "cartao", "dinheiro"):
         raise HTTPException(400, "Categoria inválida")
     if dados.responsavel and dados.responsavel not in RESPONSAVEIS:
         raise HTTPException(400, "Responsável inválido")
@@ -265,7 +265,7 @@ def atualizar_lancamento_empresa(lid: UUID, dados: dict = Body(...), db: Session
     if not l: raise HTTPException(404, "Lançamento não encontrado")
     if "grupo" in dados and dados["grupo"] not in ("pessoal", "empresa"):
         raise HTTPException(400, "Grupo inválido")
-    if "categoria" in dados and dados["categoria"] not in ("despesa", "divida", "receita", "investimento"):
+    if "categoria" in dados and dados["categoria"] not in ("despesa", "divida", "receita", "investimento", "cartao", "dinheiro"):
         raise HTTPException(400, "Categoria inválida")
     if dados.get("responsavel") and dados["responsavel"] not in RESPONSAVEIS:
         raise HTTPException(400, "Responsável inválido")
