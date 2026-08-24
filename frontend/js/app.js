@@ -5124,6 +5124,10 @@ window.abrirBebidaModal=function(beb, mode){
   function anoFiltroHtml(id, anos, atual){
     return '<div style="display:flex;align-items:center;gap:6px"><label class="text-sm">Ano:</label><select id="'+id+'" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px">'+anos.map(function(a){return '<option'+(a===atual?' selected':'')+'>'+a+'</option>';}).join('')+'</select></div>';
   }
+  function totaisCusto(itens){ var m={}; (itens||[]).forEach(function(i){ var c=i.moeda||'BRL'; var meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1; m[c]=(m[c]||0)+((parseFloat(i.custo)||0)*meses); }); return moneyMap(m); }
+  function somaNum(itens,campo){ var s=0; (itens||[]).forEach(function(i){ var meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1; s+=(parseFloat(i[campo])||0)*meses; }); return s; }
+  function pctMargem(itens){ var v=somaNum(itens,'valor'), c=somaNum(itens,'custo'); return v>0?((v-c)/v*100):null; }
+  function pctStr(n){ return n==null?'—':(n.toFixed(1)+'%'); }
 
   var _vendasAno=null;
   async function carregarVendas(){
@@ -5143,10 +5147,18 @@ window.abrirBebidaModal=function(beb, mode){
     var resumo=quadrosResumo(filtrada, _vendasAno);
     var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">'+anoFiltroHtml('vendas-ano-filtro',anos,_vendasAno)+'<button class="btn btn-primary btn-sm" data-vact2="nova">＋ Nova venda</button></div>';
     var rows=filtrada.map(function(v){ var grupos=Array.from(new Set((v.itens||[]).map(function(i){return i.grupo;}).filter(Boolean))).join(', ');
-      return '<tr><td>'+esc(v.id_lead||'—')+'</td><td><a href="#" data-vact2="ver" data-id="'+v.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(v.cliente||'(sem cliente)')+'</a></td><td>'+esc(v.vendedor||'—')+'</td><td>'+(v.data_venda||'—')+'</td><td>'+esc(v.estagio||'—')+'</td><td>'+esc(grupos||'—')+'</td><td style="text-align:right;font-weight:600">'+totais(v.itens)+'</td><td style="text-align:center;white-space:nowrap"><button class="fel-ic" data-vact2="editar" data-id="'+v.id+'" title="Editar">✏️</button><button class="fel-ic" data-vact2="del" data-id="'+v.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
+      return '<tr><td>'+esc(v.id_lead||'—')+'</td><td><a href="#" data-vact2="ver" data-id="'+v.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(v.cliente||'(sem cliente)')+'</a></td><td>'+esc(v.vendedor||'—')+'</td><td>'+(v.data_venda||'—')+'</td><td>'+esc(v.estagio||'—')+'</td><td>'+esc(grupos||'—')+'</td><td style="text-align:right;font-weight:600">'+totais(v.itens)+'</td><td style="text-align:right">'+totaisCusto(v.itens)+'</td><td style="text-align:right">'+pctStr(pctMargem(v.itens))+'</td><td style="text-align:center;white-space:nowrap"><button class="fel-ic" data-vact2="editar" data-id="'+v.id+'" title="Editar">✏️</button><button class="fel-ic" data-vact2="del" data-id="'+v.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
     }).join('');
-    var head='<thead><tr><th>ID Lead</th><th>Cliente</th><th>Vendedor</th><th>Data</th><th>Estágio</th><th>Grupos</th><th style="text-align:right">Total</th><th></th></tr></thead>';
-    root.innerHTML=resumo+toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma venda em '+_vendasAno+'</td></tr>')+'</tbody></table>';
+    var head='<thead><tr><th>ID Lead</th><th>Cliente</th><th>Vendedor</th><th>Data</th><th>Estágio</th><th>Grupos</th><th style="text-align:right">Total</th><th style="text-align:right">Custo</th><th style="text-align:right">Margem %</th><th></th></tr></thead>';
+    var totV={}, totC={}, somaV=0, somaC=0;
+    filtrada.forEach(function(v){ (v.itens||[]).forEach(function(i){
+      var c=i.moeda||'BRL', meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1;
+      var val=(parseFloat(i.valor)||0)*meses, cst=(parseFloat(i.custo)||0)*meses;
+      totV[c]=(totV[c]||0)+val; totC[c]=(totC[c]||0)+cst; somaV+=val; somaC+=cst;
+    }); });
+    var margemGeral=somaV>0?((somaV-somaC)/somaV*100):null;
+    var foot=filtrada.length?('<tfoot><tr style="font-weight:700;background:var(--surface-2)"><td colspan="6">Total ('+_vendasAno+')</td><td style="text-align:right">'+moneyMap(totV)+'</td><td style="text-align:right">'+moneyMap(totC)+'</td><td style="text-align:right">'+pctStr(margemGeral)+'</td><td></td></tr></tfoot>'):'';
+    root.innerHTML=resumo+toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma venda em '+_vendasAno+'</td></tr>')+'</tbody>'+foot+'</table>';
   }
   window.carregarVendas=carregarVendas;
 
