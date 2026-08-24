@@ -9,6 +9,7 @@ class VendaItemIn(BaseModel):
     detalhes: str | None = None
     quem_fatura: str | None = None
     moeda: str | None = 'BRL'
+    custo: float | None = 0
     valor: float | None = 0
     parcelas: int = 1
     contrato: int | None = None
@@ -26,12 +27,14 @@ class VendaItemOut(VendaItemIn):
 
 class VendaIn(BaseModel):
     id_lead: str | None = None
+    numero_venda: str | None = None
     estagio: str | None = None
     data_venda: str | None = None
     vendedor: str | None = None
     cliente: str | None = None
     quem_fatura: str | None = None
     mensal: bool = False
+    informacoes_complementares: str | None = None
     anexos: list[str] = []
     comissao_pago_em: str | None = None
     comissao_status: str | None = None
@@ -43,12 +46,14 @@ class VendaOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     id_lead: str | None = None
+    numero_venda: str | None = None
     estagio: str | None = None
     data_venda: str | None = None
     vendedor: str | None = None
     cliente: str | None = None
     quem_fatura: str | None = None
     mensal: bool = False
+    informacoes_complementares: str | None = None
     anexos: list[str] = []
     comissao_pago_em: str | None = None
     comissao_status: str | None = None

@@ -59,14 +59,14 @@ def obter_venda(vid: UUID, db: Session = Depends(get_db), _=Depends(get_current_
 def atualizar_venda(vid: UUID, dados: dict = Body(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
     v = db.query(Venda).filter(Venda.id == vid).first()
     if not v: raise HTTPException(404, "Venda não encontrada")
-    for k in ("id_lead","estagio","data_venda","vendedor","cliente","quem_fatura","mensal","anexos","comissao_pago_em","comissao_status","comissao_meses"):
+    for k in ("id_lead","numero_venda","estagio","data_venda","vendedor","cliente","quem_fatura","mensal","informacoes_complementares","anexos","comissao_pago_em","comissao_status","comissao_meses"):
         if k in dados: setattr(v, k, dados[k])
     if "itens" in dados:
         db.query(VendaItem).filter(VendaItem.venda_id == vid).delete()
         for it in dados["itens"]:
             db.add(VendaItem(venda_id=vid, grupo=it.get("grupo"), produto=it.get("produto"), detalhes=it.get("detalhes"),
                              quem_fatura=it.get("quem_fatura"), moeda=it.get("moeda") or "BRL",
-                             valor=it.get("valor") or 0, parcelas=it.get("parcelas") or 1, dias_pagamento=it.get("dias_pagamento") or 0,
+                             custo=it.get("custo") or 0, valor=it.get("valor") or 0, parcelas=it.get("parcelas") or 1, dias_pagamento=it.get("dias_pagamento") or 0,
                              nf_numero=it.get("nf_numero"), nf_data=it.get("nf_data"), nf_valor=it.get("nf_valor"),
                              contrato=it.get("contrato"), campos_extras=it.get("campos_extras") or {}))
     db.commit(); db.refresh(v)
