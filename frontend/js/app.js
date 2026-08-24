@@ -5076,12 +5076,30 @@ window.abrirBebidaModal=function(beb, mode){
   function moneyMap(m){ var ks=Object.keys(m); return ks.length?ks.map(function(c){return money(m[c],c);}).join(' · '):money(0,'BRL'); }
   function qCard(label,map,fg,bg){ return '<div style="background:'+bg+';border-radius:10px;padding:12px 14px"><div style="font-size:12px;font-weight:600;color:'+fg+';margin-bottom:4px">'+esc(label)+'</div><div style="font-size:18px;font-weight:700;color:'+fg+'">'+moneyMap(map)+'</div></div>'; }
   function addDays(ymd,n){ if(!ymd) return ''; var p=(''+ymd).split('-'); if(p.length<3) return ''; var d=new Date(+p[0],(+p[1]||1)-1,+p[2]||1); d.setDate(d.getDate()+(parseInt(n)||0)); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function addMonths(ymd,n){ if(!ymd) return ''; var p=(''+ymd).split('-'); if(p.length<3) return ''; var d=new Date(+p[0],(+p[1]||1)-1+(parseInt(n)||0),+p[2]||1); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function somaFiltrada(lista,pred){ var m={}; lista.forEach(function(v){ (v.itens||[]).forEach(function(i){ if(!pred(i)) return; var c=i.moeda||'BRL', meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1; m[c]=(m[c]||0)+((parseFloat(i.valor)||0)*meses); }); }); return m; }
+  function mapaMensal(lista){
+    var out={};
+    lista.forEach(function(v){ (v.itens||[]).forEach(function(i){
+      if(!(parseInt(i.contrato)>0)) return;
+      var start=addDays(v.data_venda,30), n=parseInt(i.contrato)||0, c=i.moeda||'BRL', val=parseFloat(i.valor)||0;
+      if(!start) return;
+      for(var m=0;m<n;m++){ var d=addMonths(start,m), ym=d.slice(0,7); out[ym]=out[ym]||{}; out[ym][c]=(out[ym][c]||0)+val; }
+    }); });
+    return out;
+  }
 
   async function carregarVendas(){
     var root=document.getElementById('vendas-root'); if(!root) return;
     root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
     var lista=[]; try{ lista=await _authFetch('GET','/fin/vendas')||[]; }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
     window._vendas=lista;
+
+    var quadTipos='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px">'
+      +qCard('Vendas totais', somaFiltrada(lista,function(){return true;}), '#111827', '#e5e7eb')
+      +qCard('Vendas únicas', somaFiltrada(lista,function(i){return !(parseInt(i.contrato)>0);}), '#1d4ed8', '#dbeafe')
+      +qCard('Vendas mensais', somaFiltrada(lista,function(i){return parseInt(i.contrato)>0;}), '#7c3aed', '#ede9fe')
+      +'</div>';
 
     var porGrupo={}; GRUPOS_FIXOS.forEach(function(g){ porGrupo[g]={}; }); var outros={};
     lista.forEach(function(v){ (v.itens||[]).forEach(function(i){
@@ -5090,9 +5108,17 @@ window.abrirBebidaModal=function(beb, mode){
       bucket[c]=(bucket[c]||0)+val;
     }); });
     var CORES=[['#1d4ed8','#dbeafe'],['#15803d','#dcfce7'],['#b45309','#fef3c7'],['#7c3aed','#ede9fe']];
-    var quad='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px">'
+    var quad='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px">'
       +GRUPOS_FIXOS.map(function(g,i){ return qCard(g, porGrupo[g], CORES[i][0], CORES[i][1]); }).join('')
       +(Object.keys(outros).length?qCard('Outros', outros, '#6b7280', '#f3f4f6'):'')
+      +'</div>';
+
+    var ano=new Date().getFullYear();
+    var mensalMap=mapaMensal(lista);
+    var MESN=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    var QS=[['Q1',ano+'-03'],['Q2',ano+'-06'],['Q3',ano+'-09'],['Q4',ano+'-12']];
+    var quadQ='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px">'
+      +QS.map(function(q){ var mm=q[1].split('-')[1]; return qCard(q[0]+' · '+MESN[parseInt(mm)]+'/'+ano, mensalMap[q[1]]||{}, '#0f766e', '#ccfbf1'); }).join('')
       +'</div>';
 
     var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" data-vact2="nova">＋ Nova venda</button></div>';
@@ -5100,7 +5126,7 @@ window.abrirBebidaModal=function(beb, mode){
       return '<tr><td>'+esc(v.id_lead||'—')+'</td><td><a href="#" data-vact2="ver" data-id="'+v.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(v.cliente||'(sem cliente)')+'</a></td><td>'+esc(v.vendedor||'—')+'</td><td>'+(v.data_venda||'—')+'</td><td>'+esc(v.estagio||'—')+'</td><td>'+esc(grupos||'—')+'</td><td style="text-align:right;font-weight:600">'+totais(v.itens)+'</td><td style="text-align:center;white-space:nowrap"><button class="fel-ic" data-vact2="editar" data-id="'+v.id+'" title="Editar">✏️</button><button class="fel-ic" data-vact2="del" data-id="'+v.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
     }).join('');
     var head='<thead><tr><th>ID Lead</th><th>Cliente</th><th>Vendedor</th><th>Data</th><th>Estágio</th><th>Grupos</th><th style="text-align:right">Total</th><th></th></tr></thead>';
-    root.innerHTML=quad+toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma venda</td></tr>')+'</tbody></table>';
+    root.innerHTML=quadTipos+quad+quadQ+toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma venda</td></tr>')+'</tbody></table>';
   }
   window.carregarVendas=carregarVendas;
 
