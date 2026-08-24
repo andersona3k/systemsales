@@ -5345,10 +5345,31 @@ window.abrirBebidaModal=function(beb, mode){
     });
     return out;
   }
+  function qCard(label,map,fg,bg){
+    return '<div style="background:'+bg+';border-radius:10px;padding:12px 14px"><div style="font-size:12px;font-weight:600;color:'+fg+';margin-bottom:4px">'+label+'</div><div style="font-size:18px;font-weight:700;color:'+fg+'">'+moneyMap(map)+'</div></div>';
+  }
   function renderComissao(){
     var root=document.getElementById('comissao-root'); if(!root||!window._comData) return;
     var pct=window._comData.pct, corte=window._comData.corte;
     var linhas=gerarLinhas().map(function(l){ var comM={}; Object.keys(l.totM).forEach(function(c){ comM[c]=l.totM[c]*pct/100; }); l.comM=comM; return l; });
+
+    var hojeYmd=ymdFmt(new Date()), mesAtual=hojeYmd.slice(0,7);
+    var bkRecebidas={}, bkMesAtual={}, bkFuturo={}, bkAtrasadas={};
+    function add(bk,m){ Object.keys(m).forEach(function(c){ bk[c]=(bk[c]||0)+m[c]; }); }
+    linhas.forEach(function(l){
+      if(l.st==='Pago'){ add(bkRecebidas,l.comM); return; }
+      if(!l.prev) return;
+      if(l.prev<hojeYmd) add(bkAtrasadas,l.comM);
+      else if(l.prev.slice(0,7)===mesAtual) add(bkMesAtual,l.comM);
+      else add(bkFuturo,l.comM);
+    });
+    var quad='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px">'
+      +qCard('Recebidas',bkRecebidas,'#15803d','#dcfce7')
+      +qCard('A Receber · mês atual',bkMesAtual,'#b45309','#fef3c7')
+      +qCard('A Receber · futuro',bkFuturo,'#1d4ed8','#dbeafe')
+      +qCard('Atrasadas',bkAtrasadas,'#b91c1c','#fecaca')
+      +'</div>';
+
     var filtr=linhas.filter(function(l){ return (!_m3||l.mc.ym===_m3) && (!_s3||l.st===_s3); });
     var rows=filtr.map(function(l){ var v=l.v; var opts=['A pagar','Pago','Pendente'].map(function(x){return '<option'+(l.st===x?' selected':'')+'>'+x+'</option>';}).join('');
       return '<tr><td>'+esc(v.id_lead||'—')+'</td><td>'+esc(v.cliente||'—')+'</td><td>'+esc(v.vendedor||'—')+'</td><td class="text-sm">'+esc(l.tipo)+'</td><td>'+esc(l.grupos||'—')+'</td><td style="text-align:right">'+moneyMap(l.totM)+'</td><td style="text-align:right;font-weight:600;color:#15803d">'+moneyMap(l.comM)+'</td><td>'+(l.prev||'—')+'</td><td>'+l.mc.label+'</td><td><select class="com-status3" data-vid="'+v.id+'" data-key="'+esc(l.key)+'" style="padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:'+stBg(l.st)+'">'+opts+'</select></td><td><input type="date" class="com-pago3" data-vid="'+v.id+'" data-key="'+esc(l.key)+'" value="'+(l.pg||'')+'" style="padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px"></td></tr>';
@@ -5357,7 +5378,7 @@ window.abrirBebidaModal=function(beb, mode){
     var sopts=['','A pagar','Pago','Pendente'].map(function(x){return '<option value="'+x+'"'+(_s3===x?' selected':'')+'>'+(x||'Todos status')+'</option>';}).join('');
     var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label class="text-sm">Mês:</label><input type="month" id="com-mes3" value="'+esc(_m3)+'" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px"><select id="com-stf3" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px">'+sopts+'</select><button class="btn btn-sm btn-secondary" data-com3="limpar">Limpar</button><span class="text-sm text-muted">('+pct+'% · corte dia '+corte+')</span></div><div style="font-weight:700">Comissão no filtro: <span style="color:#15803d">'+moneyMap(totCom)+'</span></div></div>';
     var head='<thead><tr><th>ID</th><th>Cliente</th><th>Vendedor</th><th>Tipo</th><th>Grupos</th><th style="text-align:right">Valor</th><th style="text-align:right">Comissão</th><th>Previsão</th><th>Mês</th><th>Status</th><th>Pago em</th></tr></thead>';
-    root.innerHTML=toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma linha</td></tr>')+'</tbody></table>';
+    root.innerHTML=quad+toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma linha</td></tr>')+'</tbody></table>';
   }
   window.carregarComissao=carregarComissao;
 
