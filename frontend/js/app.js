@@ -5071,7 +5071,7 @@ window.abrirBebidaModal=function(beb, mode){
 (function(){
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function money(n,cur){ return ((cur==='USD')?'US$ ':'R$ ')+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function totais(itens){ var m={}; (itens||[]).forEach(function(i){ var c=i.moeda||'BRL'; m[c]=(m[c]||0)+(parseFloat(i.valor)||0); }); var ks=Object.keys(m); return ks.length?ks.map(function(c){return money(m[c],c);}).join(' · '):money(0,'BRL'); }
+  function totais(itens){ var m={}; (itens||[]).forEach(function(i){ var c=i.moeda||'BRL'; var meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1; m[c]=(m[c]||0)+((parseFloat(i.valor)||0)*meses); }); var ks=Object.keys(m); return ks.length?ks.map(function(c){return money(m[c],c);}).join(' · '):money(0,'BRL'); }
   function addDays(ymd,n){ if(!ymd) return ''; var p=(''+ymd).split('-'); if(p.length<3) return ''; var d=new Date(+p[0],(+p[1]||1)-1,+p[2]||1); d.setDate(d.getDate()+(parseInt(n)||0)); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 
   async function carregarVendas(){
@@ -5089,12 +5089,11 @@ window.abrirBebidaModal=function(beb, mode){
   window.carregarVendas=carregarVendas;
 
   async function abrirVendaModal(venda){
-    var grupos=[],produtos=[],campos=[],vendedores=[],quemFatura=[];
+    var grupos=[],produtos=[],campos=[],vendedores=[];
     try{ var g=await _authFetch('GET','/fin/config/fin_grupos'); grupos=(g&&g.valor)||[]; }catch(e){}
     try{ produtos=await _authFetch('GET','/fin/produtos')||[]; }catch(e){}
     try{ var cc=await _authFetch('GET','/fin/config/fin_campos_venda'); campos=(cc&&cc.valor)||[]; }catch(e){}
-    try{ var vv=await _authFetch('GET','/fin/config/fin_vendedores'); vendedores=(vv&&vv.valor)||[]; }catch(e){}
-    try{ var qq=await _authFetch('GET','/fin/config/fin_quem_fatura'); quemFatura=(qq&&qq.valor)||[]; }catch(e){}
+    try{ var vv=await _authFetch('GET','/proposta/config/op_vendedores'); vendedores=(vv&&vv.valor)||[]; }catch(e){}
     var state={ id:(venda&&venda.id)||null, data:JSON.parse(JSON.stringify(Object.assign({itens:[],anexos:[]}, venda||{}))) };
     if(!state.data.itens || !state.data.itens.length) state.data.itens=[{}];
     var ov=document.getElementById('venda-modal'); if(ov) ov.remove();
@@ -5113,7 +5112,7 @@ window.abrirBebidaModal=function(beb, mode){
       var h='<div class="venda-item" data-idx="'+idx+'" style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>Item '+(idx+1)+(it.grupo?' · '+esc(it.grupo):'')+'</b><button class="btn btn-sm btn-secondary vi-del" style="color:var(--danger)">Remover</button></div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Grupo</label><select class="form-control vi-grupo">'+gopts+'</select></div><div class="form-group" style="flex:1;min-width:160px"><label class="form-label">Produto</label><input class="form-control vi-produto" list="venda-prod-list" value="'+esc(it.produto||'')+'"></div></div>'
-        +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">Valor</label><input class="form-control vi-valor" type="number" step="0.01" value="'+(it.valor!=null?it.valor:'')+'"></div><div class="form-group" style="flex:0 0 130px"><label class="form-label">Moeda</label><select class="form-control vi-moeda">'+mopts+'</select></div><div class="form-group" style="flex:1;min-width:90px"><label class="form-label">Parcelas</label><input class="form-control vi-parcelas" type="number" min="1" value="'+(it.parcelas||1)+'"></div><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">Dias Pgto</label><input class="form-control vi-dias" type="number" value="'+(it.dias_pagamento||0)+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Contrato (meses)</label><input class="form-control vi-contrato" type="number" min="0" value="'+(it.contrato||'')+'"></div><div class="form-group" style="flex:1;min-width:150px"><label class="form-label">Quem Fatura</label><select class="form-control vi-quem">'+selOf(quemFatura,it.quem_fatura||'','— quem fatura —')+'</select></div></div>';
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">Valor</label><input class="form-control vi-valor" type="number" step="0.01" value="'+(it.valor!=null?it.valor:'')+'"></div><div class="form-group" style="flex:0 0 130px"><label class="form-label">Moeda</label><select class="form-control vi-moeda">'+mopts+'</select></div><div class="form-group" style="flex:1;min-width:90px"><label class="form-label">Parcelas</label><input class="form-control vi-parcelas" type="number" min="1" value="'+(it.parcelas||1)+'"></div><div class="form-group" style="flex:1;min-width:110px"><label class="form-label">Dias Pgto</label><input class="form-control vi-dias" type="number" value="'+(it.dias_pagamento||0)+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Contrato (meses)</label><input class="form-control vi-contrato" type="number" min="0" value="'+(it.contrato||'')+'"></div></div>';
       if(edit){ h+='<div class="form-group"><label class="form-label">Detalhes</label><input class="form-control vi-detalhes" value="'+esc(it.detalhes||'')+'"></div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap"><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Nº NF</label><input class="form-control vi-nfnum" value="'+esc(it.nf_numero||'')+'"></div><div class="form-group" style="flex:1;min-width:140px"><label class="form-label">Data NF</label><input class="form-control vi-nfdata" type="date" value="'+(it.nf_data||'')+'"></div><div class="form-group" style="flex:1;min-width:120px"><label class="form-label">Valor NF</label><input class="form-control vi-nfvalor" type="number" step="0.01" value="'+(it.nf_valor!=null?it.nf_valor:'')+'"></div></div>'; }
       if(camposHtml) h+='<div style="display:flex;gap:10px;flex-wrap:wrap">'+camposHtml+'</div>';
@@ -5339,8 +5338,8 @@ window.abrirBebidaModal=function(beb, mode){
         out.push({v:v,key:'unica',tipo:'À vista',grupos:Array.from(new Set(normais.map(function(i){return i.grupo;}).filter(Boolean))).join(', '),totM:totM,prev:prev,mc:mesComissao(prev,corte),st:st,pg:pg});
       }
       mensais.forEach(function(i){
-        var start=addDays(i.nf_data,i.dias_pagamento), n=parseInt(i.contrato)||0, cur=i.moeda||'BRL', val=parseFloat(i.valor)||0;
-        if(!start){ var k0=i.id+':pend'; var tm0={}; tm0[cur]=val; out.push({v:v,key:k0,tipo:'Mensal (aguard. NF)',grupos:i.grupo||'',totM:tm0,prev:'',mc:{ym:'',label:'—'},st:stOf(k0),pg:pgOf(k0)}); }
+        var start=addDays(v.data_venda,30), n=parseInt(i.contrato)||0, cur=i.moeda||'BRL', val=parseFloat(i.valor)||0;
+        if(!start){ var k0=i.id+':pend'; var tm0={}; tm0[cur]=val; out.push({v:v,key:k0,tipo:'Mensal (aguard. data da venda)',grupos:i.grupo||'',totM:tm0,prev:'',mc:{ym:'',label:'—'},st:stOf(k0),pg:pgOf(k0)}); }
         else { for(var m=0;m<n;m++){ var d=addMonths(start,m), k=i.id+':'+m, tm={}; tm[cur]=val; out.push({v:v,key:k,tipo:'Mensal '+(m+1)+'/'+n,grupos:i.grupo||'',totM:tm,prev:d,mc:mesComissao(d,corte),st:stOf(k),pg:pgOf(k)}); } }
       });
     });
@@ -8408,9 +8407,10 @@ window.abrirBebidaModal=function(beb, mode){
   if(!window._feBound){
     window._feBound=true;
     document.addEventListener('click', function(e){
+      var fecharPainel=false;
       if(_feColAberto){
         var dentroPainel=e.target.closest && (e.target.closest('.colf-painel')||e.target.closest('[data-colf-toggle]'));
-        if(!dentroPainel){ _feColAberto=null; renderFinancasEmpresa(); }
+        if(!dentroPainel){ _feColAberto=null; fecharPainel=true; }
       }
       var togB=e.target.closest && e.target.closest('#financas-empresa-root [data-colf-toggle]');
       if(togB){ var campoTog=togB.getAttribute('data-colf-toggle'); _feColAberto=(_feColAberto===campoTog)?null:campoTog; renderFinancasEmpresa(); return; }
@@ -8449,6 +8449,7 @@ window.abrirBebidaModal=function(beb, mode){
           return;
         }
       }
+      if(fecharPainel) renderFinancasEmpresa();
     });
     document.addEventListener('change', function(e){
       var me=e.target.closest && e.target.closest('#fe-mes-escolha'); if(me){ _feMesEscolha=me.value; _feMesModo='escolha'; renderFinancasEmpresa(); }
