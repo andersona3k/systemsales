@@ -5073,6 +5073,8 @@ window.abrirBebidaModal=function(beb, mode){
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function money(n,cur){ return ((cur==='USD')?'US$ ':'R$ ')+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function totais(itens){ var m={}; (itens||[]).forEach(function(i){ var c=i.moeda||'BRL'; var meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1; m[c]=(m[c]||0)+((parseFloat(i.valor)||0)*meses); }); var ks=Object.keys(m); return ks.length?ks.map(function(c){return money(m[c],c);}).join(' · '):money(0,'BRL'); }
+  function moneyMap(m){ var ks=Object.keys(m); return ks.length?ks.map(function(c){return money(m[c],c);}).join(' · '):money(0,'BRL'); }
+  function qCard(label,map,fg,bg){ return '<div style="background:'+bg+';border-radius:10px;padding:12px 14px"><div style="font-size:12px;font-weight:600;color:'+fg+';margin-bottom:4px">'+esc(label)+'</div><div style="font-size:18px;font-weight:700;color:'+fg+'">'+moneyMap(map)+'</div></div>'; }
   function addDays(ymd,n){ if(!ymd) return ''; var p=(''+ymd).split('-'); if(p.length<3) return ''; var d=new Date(+p[0],(+p[1]||1)-1,+p[2]||1); d.setDate(d.getDate()+(parseInt(n)||0)); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 
   async function carregarVendas(){
@@ -5080,12 +5082,25 @@ window.abrirBebidaModal=function(beb, mode){
     root.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
     var lista=[]; try{ lista=await _authFetch('GET','/fin/vendas')||[]; }catch(e){ root.innerHTML='<p style="color:var(--danger)">Erro: '+esc(e.message)+'</p>'; return; }
     window._vendas=lista;
+
+    var porGrupo={}; GRUPOS_FIXOS.forEach(function(g){ porGrupo[g]={}; }); var outros={};
+    lista.forEach(function(v){ (v.itens||[]).forEach(function(i){
+      var c=i.moeda||'BRL', meses=(parseInt(i.contrato)>0)?parseInt(i.contrato):1, val=(parseFloat(i.valor)||0)*meses;
+      var bucket=(i.grupo && porGrupo[i.grupo])?porGrupo[i.grupo]:outros;
+      bucket[c]=(bucket[c]||0)+val;
+    }); });
+    var CORES=[['#1d4ed8','#dbeafe'],['#15803d','#dcfce7'],['#b45309','#fef3c7'],['#7c3aed','#ede9fe']];
+    var quad='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px">'
+      +GRUPOS_FIXOS.map(function(g,i){ return qCard(g, porGrupo[g], CORES[i][0], CORES[i][1]); }).join('')
+      +(Object.keys(outros).length?qCard('Outros', outros, '#6b7280', '#f3f4f6'):'')
+      +'</div>';
+
     var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" data-vact2="nova">＋ Nova venda</button></div>';
     var rows=lista.map(function(v){ var grupos=Array.from(new Set((v.itens||[]).map(function(i){return i.grupo;}).filter(Boolean))).join(', ');
       return '<tr><td>'+esc(v.id_lead||'—')+'</td><td><a href="#" data-vact2="ver" data-id="'+v.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(v.cliente||'(sem cliente)')+'</a></td><td>'+esc(v.vendedor||'—')+'</td><td>'+(v.data_venda||'—')+'</td><td>'+esc(v.estagio||'—')+'</td><td>'+esc(grupos||'—')+'</td><td style="text-align:right;font-weight:600">'+totais(v.itens)+'</td><td style="text-align:center;white-space:nowrap"><button class="fel-ic" data-vact2="editar" data-id="'+v.id+'" title="Editar">✏️</button><button class="fel-ic" data-vact2="del" data-id="'+v.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
     }).join('');
     var head='<thead><tr><th>ID Lead</th><th>Cliente</th><th>Vendedor</th><th>Data</th><th>Estágio</th><th>Grupos</th><th style="text-align:right">Total</th><th></th></tr></thead>';
-    root.innerHTML=toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma venda</td></tr>')+'</tbody></table>';
+    root.innerHTML=quad+toolbar+'<table class="tabela-contatos">'+head+'<tbody>'+(rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma venda</td></tr>')+'</tbody></table>';
   }
   window.carregarVendas=carregarVendas;
 
