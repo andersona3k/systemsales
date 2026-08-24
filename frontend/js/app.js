@@ -5129,6 +5129,21 @@ window.abrirBebidaModal=function(beb, mode){
   function pctMargem(itens){ var v=somaNum(itens,'valor'), c=somaNum(itens,'custo'); return v>0?((v-c)/v*100):null; }
   function pctStr(n){ return n==null?'—':(n.toFixed(1)+'%'); }
 
+  var COLS_VENDA=[
+    {chave:'id_lead',label:'ID Lead'},{chave:'numero_venda',label:'Nº Venda'},{chave:'data_venda',label:'Data Venda'},
+    {chave:'vendedor',label:'Vendedor'},{chave:'cliente',label:'Cliente'},{chave:'grupo',label:'Grupo'},{chave:'produto',label:'Produto'},
+    {chave:'moeda',label:'Moeda'},{chave:'custo',label:'Custo'},{chave:'valor',label:'Valor Venda'},{chave:'parcelas',label:'Parcelas'},
+    {chave:'dias_pagamento',label:'Dias Pgto'},{chave:'contrato',label:'Contrato (meses)'}
+  ];
+  function linhasExportVendas(lista){
+    var out=[];
+    lista.forEach(function(v){ (v.itens||[]).forEach(function(i){
+      out.push({ id_lead:v.id_lead||'', numero_venda:v.numero_venda||'', data_venda:v.data_venda||'', vendedor:v.vendedor||'', cliente:v.cliente||'',
+        grupo:i.grupo||'', produto:i.produto||'', moeda:i.moeda||'BRL', custo:i.custo||0, valor:i.valor||0, parcelas:i.parcelas||1, dias_pagamento:i.dias_pagamento||0, contrato:i.contrato||'' });
+    }); });
+    return out;
+  }
+
   var _vendasAno=null;
   async function carregarVendas(){
     var root=document.getElementById('vendas-root'); if(!root) return;
@@ -5143,9 +5158,16 @@ window.abrirBebidaModal=function(beb, mode){
     var lista=window._vendasTodas||[];
     var anos=anosDisponiveis(lista);
     var filtrada=lista.filter(function(v){ return (v.data_venda||'').slice(0,4)===_vendasAno; });
+    window._vendasFiltradaAtual=filtrada;
 
     var resumo=quadrosResumo(filtrada, _vendasAno);
-    var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">'+anoFiltroHtml('vendas-ano-filtro',anos,_vendasAno)+'<button class="btn btn-primary btn-sm" data-vact2="nova">＋ Nova venda</button></div>';
+    var toolbar='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+anoFiltroHtml('vendas-ano-filtro',anos,_vendasAno)
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">'
+      +'<button class="btn btn-sm btn-secondary" data-vact2="modelo">📄 Modelo</button>'
+      +'<label class="btn btn-sm btn-secondary" style="cursor:pointer;margin:0">📥 Importar<input type="file" id="vendas-import-file" accept=".xlsx" style="display:none"></label>'
+      +'<button class="btn btn-sm btn-secondary" data-vact2="exportar">⬇️ Exportar Excel</button>'
+      +'<button class="btn btn-primary btn-sm" data-vact2="nova">＋ Nova venda</button>'
+      +'</div></div>';
     var rows=filtrada.map(function(v){ var grupos=Array.from(new Set((v.itens||[]).map(function(i){return i.grupo;}).filter(Boolean))).join(', ');
       return '<tr><td>'+esc(v.id_lead||'—')+'</td><td><a href="#" data-vact2="ver" data-id="'+v.id+'" style="color:var(--primary);font-weight:600;text-decoration:none">'+esc(v.cliente||'(sem cliente)')+'</a></td><td>'+esc(v.vendedor||'—')+'</td><td>'+(v.data_venda||'—')+'</td><td>'+esc(v.estagio||'—')+'</td><td>'+esc(grupos||'—')+'</td><td style="text-align:right;font-weight:600">'+totais(v.itens)+'</td><td style="text-align:right">'+totaisCusto(v.itens)+'</td><td style="text-align:right">'+pctStr(pctMargem(v.itens))+'</td><td style="text-align:center;white-space:nowrap"><button class="fel-ic" data-vact2="editar" data-id="'+v.id+'" title="Editar">✏️</button><button class="fel-ic" data-vact2="del" data-id="'+v.id+'" title="Excluir" style="color:var(--danger)">🗑️</button></td></tr>';
     }).join('');
@@ -5305,7 +5327,14 @@ window.abrirBebidaModal=function(beb, mode){
       if(act==='nova'){ abrirVendaModal(null); return; }
       var v=(window._vendas||[]).filter(function(x){return x.id===id;})[0];
       if(act==='ver'||act==='editar'){ if(v) abrirVendaModal(v); return; }
-      if(act==='del'){ if(confirm('Excluir esta venda?')){ _authFetch('DELETE','/fin/vendas/'+id).then(carregarVendas).catch(function(err){toast(err.message,'error');}); } }
+      if(act==='del'){ if(confirm('Excluir esta venda?')){ _authFetch('DELETE','/fin/vendas/'+id).then(carregarVendas).catch(function(err){toast(err.message,'error');}); } return; }
+      if(act==='modelo'){ _baixarArquivoPost('/fin/exportar-xlsx','modelo_vendas.xlsx',{linhas:[],colunas:COLS_VENDA,arquivo:'modelo_vendas.xlsx'}); return; }
+      if(act==='exportar'){ _baixarArquivoPost('/fin/exportar-xlsx','vendas_'+_vendasAno+'.xlsx',{linhas:linhasExportVendas(window._vendasFiltradaAtual||[]),colunas:COLS_VENDA,arquivo:'vendas_'+_vendasAno+'.xlsx'}); return; }
+    });
+    document.addEventListener('change', function(e){
+      var imp=e.target.closest && e.target.closest('#vendas-import-file'); if(!imp || !imp.files || !imp.files.length) return;
+      var arq=imp.files[0]; imp.value='';
+      _importarArquivo('/fin/vendas/importar', arq).then(function(res){ toast(_resumoImportacao(res),'success'); carregarVendas(); }).catch(function(err){ toast('Erro ao importar: '+err.message,'error'); });
     });
   }
 

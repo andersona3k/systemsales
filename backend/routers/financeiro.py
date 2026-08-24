@@ -23,6 +23,7 @@ from ..schemas.financeiro import (
 from ..services.auth_service import get_current_user
 from ..config import get_settings
 from ..services.img_service import salvar_imagem
+from ..services.prospeccao_export import ler_planilha
 
 router = APIRouter(prefix="/api/fin", tags=["Financeiro"])
 settings = get_settings()
@@ -78,6 +79,80 @@ def deletar_venda(vid: UUID, db: Session = Depends(get_db), _=Depends(get_curren
     v = db.query(Venda).filter(Venda.id == vid).first()
     if not v: raise HTTPException(404, "Venda não encontrada")
     db.delete(v); db.commit()
+
+
+def _parse_float_venda(s):
+    if s is None or str(s).strip() == "":
+        return 0.0
+    try:
+        return float(str(s).replace(",", "."))
+    except ValueError:
+        return 0.0
+
+
+def _parse_int_venda(s, default=None):
+    if s is None or str(s).strip() == "":
+        return default
+    try:
+        return int(float(str(s).replace(",", ".")))
+    except ValueError:
+        return default
+
+
+def _parse_data_venda(s):
+    if not s:
+        return None
+    s = str(s).strip()
+    return (s[:10] or None) if s else None
+
+
+@router.post("/vendas/importar")
+async def importar_vendas(arquivo: UploadFile = File(...), db: Session = Depends(get_db), _=Depends(get_current_user)):
+    conteudo = await arquivo.read()
+    linhas = ler_planilha(conteudo, arquivo.filename)
+    grupos: dict = {}
+    ordem: list = []
+    invalidas = 0
+    for linha in linhas:
+        valor = linha.get("Valor Venda") or ""
+        custo = linha.get("Custo") or ""
+        if not str(valor).strip() and not str(custo).strip():
+            invalidas += 1
+            continue
+        numero_venda = (linha.get("Nº Venda") or "").strip()
+        chave = numero_venda if numero_venda else f"__linha_{len(ordem)}__"
+        if chave not in grupos:
+            grupos[chave] = {
+                "id_lead": (linha.get("ID Lead") or "").strip() or None,
+                "numero_venda": numero_venda or None,
+                "data_venda": _parse_data_venda(linha.get("Data Venda")),
+                "vendedor": (linha.get("Vendedor") or "").strip() or None,
+                "cliente": (linha.get("Cliente") or "").strip() or None,
+                "estagio": "Vendas",
+                "itens": [],
+            }
+            ordem.append(chave)
+        grupos[chave]["itens"].append({
+            "grupo": (linha.get("Grupo") or "").strip() or None,
+            "produto": (linha.get("Produto") or "").strip() or None,
+            "moeda": (linha.get("Moeda") or "").strip().upper() or "BRL",
+            "custo": _parse_float_venda(custo),
+            "valor": _parse_float_venda(valor),
+            "parcelas": _parse_int_venda(linha.get("Parcelas"), 1) or 1,
+            "dias_pagamento": _parse_int_venda(linha.get("Dias Pgto"), 30) or 30,
+            "contrato": _parse_int_venda(linha.get("Contrato (meses)"), None),
+        })
+    criadas = 0
+    for chave in ordem:
+        g = grupos[chave]
+        itens = g.pop("itens")
+        v = Venda(**g)
+        db.add(v); db.flush()
+        for it in itens:
+            db.add(VendaItem(venda_id=v.id, **it))
+        criadas += 1
+    db.commit()
+    return {"criadas": criadas, "duplicadas": 0, "invalidas": invalidas, "total_linhas": len(linhas)}
 
 
 @router.post("/vendas/{vid}/anexo", response_model=VendaOut)
